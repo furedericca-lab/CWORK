@@ -30,5 +30,7 @@ describe('ToolRegistry', () => {
 
     await registry.remove('tool.echo');
     expect(await registry.list()).toHaveLength(0);
+
+    await expect(registry.remove('tool.echo')).rejects.toThrow(/Tool not found/);
   });
 });

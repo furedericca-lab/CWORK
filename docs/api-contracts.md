@@ -310,6 +310,18 @@ Expected behavior across plugin endpoints:
 ### 7.1 GET `/tools`
 List registered tools.
 
+### 7.1.1 POST `/tools/reload`
+Reload builtin tool set after manual remove/toggle operations.
+
+### 7.1.2 POST `/tools/{toolName}/enable`
+Enable a tool.
+
+### 7.1.3 POST `/tools/{toolName}/disable`
+Disable a tool.
+
+### 7.1.4 DELETE `/tools/{toolName}`
+Remove a tool from active registry.
+
 ### 7.2 POST `/tools/execute`
 Execute a tool for debugging (admin/debug mode).
 
@@ -341,6 +353,15 @@ Disable a skill.
 
 ### 7.8 DELETE `/skills/{skillName}`
 Delete a local skill.
+
+### 7.9 MCP Management Endpoints
+1. `GET /tools/mcp/servers`
+2. `POST /tools/mcp/add`
+3. `POST /tools/mcp/update`
+4. `POST /tools/mcp/enable`
+5. `POST /tools/mcp/disable`
+6. `POST /tools/mcp/test`
+7. `POST /tools/mcp/delete`
 
 ## 8. SubAgent Contracts
 

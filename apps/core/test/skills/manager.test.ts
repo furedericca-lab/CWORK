@@ -79,4 +79,31 @@ describe('SkillManager', () => {
 
     await expect(managerMultiRoot.importZip(zipPath)).rejects.toThrow(/single root folder/);
   });
+
+  it('enforces sandbox_only enable constraint when sandbox is disabled', async () => {
+    const rootDir = await createTempDir('cwork-skill-root-');
+    const zipDir = await createTempDir('cwork-skill-zip-');
+    const zipPath = join(zipDir, 'sandbox-skill.zip');
+    await writeFile(zipPath, 'fake zip payload', 'utf8');
+
+    const repositories = createInMemoryRepositories();
+    const manager = new SkillManager(repositories.skills, {
+      rootDir,
+      sandboxEnabled: false,
+      listArchiveEntries: async () => ['sandbox-skill/', 'sandbox-skill/SKILL.md', 'sandbox-skill/skill.json'],
+      extractArchive: async (_zipPath, destination) => {
+        await mkdir(join(destination, 'sandbox-skill'), { recursive: true });
+        await writeFile(join(destination, 'sandbox-skill', 'SKILL.md'), '# sandbox', 'utf8');
+        await writeFile(
+          join(destination, 'sandbox-skill', 'skill.json'),
+          JSON.stringify({ name: 'Sandbox Skill', scope: 'sandbox_only' }),
+          'utf8'
+        );
+      }
+    });
+
+    const imported = await manager.importZip(zipPath);
+    expect(imported).toMatchObject({ skillId: 'sandbox-skill', enabled: false, scope: 'sandbox_only' });
+    await expect(manager.enable('sandbox-skill')).rejects.toThrow(/requires sandbox mode/);
+  });
 });

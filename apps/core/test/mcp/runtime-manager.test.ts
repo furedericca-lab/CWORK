@@ -29,6 +29,14 @@ describe('McpRuntimeManager', () => {
     expect(state.name).toBe('server1');
     expect(typeof state.healthy).toBe('boolean');
 
+    await manager.disableServer('server1');
+    await manager.disableServer('server1');
+    await manager.enableServer('server1');
+    await manager.enableServer('server1');
+
+    const listed = await manager.listServers();
+    expect(listed.find((item) => item.name === 'server1')?.runtime.enabled).toBe(true);
+
     await manager.deleteServer('server1');
     expect(await manager.listServers()).toHaveLength(0);
   });

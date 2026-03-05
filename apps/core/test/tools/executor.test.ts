@@ -64,4 +64,61 @@ describe('ToolExecutor', () => {
     const timedOut = await executor.execute('tool.slow', {}, { requestId: 'req_4' });
     expect(timedOut).toMatchObject({ ok: false, error: { code: 'TIMEOUT' } });
   });
+
+  it('emits terminal onEnd hook for both success and failure', async () => {
+    const repositories = createInMemoryRepositories();
+    const registry = new ToolRegistry(repositories.tools);
+    const executor = new ToolExecutor(registry, { timeoutMs: 50 });
+
+    await registry.register({
+      meta: {
+        toolName: 'tool.ok',
+        description: 'ok',
+        enabled: true,
+        source: 'builtin',
+        schema: {}
+      },
+      handler() {
+        return { value: 1 };
+      }
+    });
+
+    await registry.register({
+      meta: {
+        toolName: 'tool.fail',
+        description: 'fail',
+        enabled: true,
+        source: 'builtin',
+        schema: {}
+      },
+      handler() {
+        throw new Error('boom');
+      }
+    });
+
+    const starts: string[] = [];
+    const ends: string[] = [];
+
+    await executor.execute('tool.ok', {}, { requestId: 'req_1' }, {
+      onStart(payload) {
+        starts.push(payload.callId);
+      },
+      onEnd(payload) {
+        ends.push(payload.callId);
+      }
+    });
+
+    await executor.execute('tool.fail', {}, { requestId: 'req_2' }, {
+      onStart(payload) {
+        starts.push(payload.callId);
+      },
+      onEnd(payload) {
+        ends.push(payload.callId);
+      }
+    });
+
+    expect(starts).toHaveLength(2);
+    expect(ends).toHaveLength(2);
+    expect(new Set(ends).size).toBe(2);
+  });
 });

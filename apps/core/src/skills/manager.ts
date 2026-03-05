@@ -11,6 +11,7 @@ import type { SkillRepository } from '../repo/interfaces';
 
 export interface SkillManagerOptions {
   rootDir?: string;
+  sandboxEnabled?: boolean;
   listArchiveEntries?: (zipPath: string) => Promise<string[]>;
   extractArchive?: (zipPath: string, destination: string) => Promise<void>;
 }
@@ -58,6 +59,7 @@ const parseSkillMeta = async (skillDir: string): Promise<Pick<SkillDescriptor, '
 
 export class SkillManager {
   private readonly rootDir: string;
+  private readonly sandboxEnabled: boolean;
   private readonly listArchiveEntries: (zipPath: string) => Promise<string[]>;
   private readonly extractArchive: (zipPath: string, destination: string) => Promise<void>;
 
@@ -66,8 +68,17 @@ export class SkillManager {
     options: SkillManagerOptions = {}
   ) {
     this.rootDir = options.rootDir ?? resolve(process.cwd(), '.runtime/skills');
+    this.sandboxEnabled = options.sandboxEnabled ?? false;
     this.listArchiveEntries = options.listArchiveEntries ?? defaultListArchiveEntries;
     this.extractArchive = options.extractArchive ?? defaultExtractArchive;
+  }
+
+  private canEnableScope(scope: SkillDescriptor['scope']): boolean {
+    return scope !== 'sandbox_only' || this.sandboxEnabled;
+  }
+
+  private defaultEnabledForScope(scope: SkillDescriptor['scope']): boolean {
+    return this.canEnableScope(scope);
   }
 
   async ensureRoot(): Promise<void> {
@@ -92,7 +103,7 @@ export class SkillManager {
       const descriptor: SkillDescriptor = {
         skillId,
         name: meta.name,
-        enabled: existing?.enabled ?? true,
+        enabled: this.canEnableScope(meta.scope) ? (existing?.enabled ?? this.defaultEnabledForScope(meta.scope)) : false,
         scope: meta.scope,
         ...(meta.description ? { description: meta.description } : {})
       };
@@ -171,7 +182,7 @@ export class SkillManager {
       const descriptor: SkillDescriptor = {
         skillId,
         name: meta.name,
-        enabled: true,
+        enabled: this.defaultEnabledForScope(meta.scope),
         scope: meta.scope,
         ...(meta.description ? { description: meta.description } : {})
       };
@@ -187,6 +198,9 @@ export class SkillManager {
     const found = await this.repository.get(skillId);
     if (!found) {
       throw new AppError(ERROR_CODE.NOT_FOUND, `Skill not found: ${skillId}`);
+    }
+    if (!this.canEnableScope(found.scope)) {
+      throw new AppError(ERROR_CODE.FORBIDDEN, `Skill requires sandbox mode: ${skillId}`);
     }
 
     const next: SkillDescriptor = {

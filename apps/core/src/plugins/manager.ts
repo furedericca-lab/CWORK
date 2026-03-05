@@ -69,6 +69,7 @@ export class PluginManager {
 
     await rm(installDir, { recursive: true, force: true });
     await cp(src, installDir, { recursive: true });
+    await rm(join(installDir, '.git'), { recursive: true, force: true });
 
     const item: PluginItem = {
       pluginId: manifest.pluginId,
@@ -105,6 +106,7 @@ export class PluginManager {
 
       try {
         await cp(tempDir, installDir, { recursive: true });
+        await rm(join(installDir, '.git'), { recursive: true, force: true });
       } catch (error) {
         await rm(installDir, { recursive: true, force: true });
         throw error;
@@ -182,17 +184,19 @@ export class PluginManager {
       return this.enable(pluginId);
     }
 
-    return {
+    const next: PluginItem = {
       ...found,
       status: 'disabled',
       error: null
     };
+    await this.repository.upsert(next);
+    return next;
   }
 
   async uninstall(pluginId: string): Promise<void> {
     const found = await this.repository.get(pluginId);
     if (!found) {
-      throw new AppError(ERROR_CODE.NOT_FOUND, `Plugin not found: ${pluginId}`);
+      return;
     }
 
     const installDir = resolve(this.rootDir, toInstallDirName(pluginId));

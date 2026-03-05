@@ -55,11 +55,11 @@ Reference implementations:
 
 ## What Still Needs Improvement
 
-- Complete remaining Phase 3 closure work (full exit-criteria validation and production-hardening pass).
+- Complete Phase 4 implementation (SubAgent orchestration and proactive capability adapters).
 - Add stronger runtime observability coverage (request lifecycle snapshots and latency histograms).
 - Expand SSE robustness tests for disconnect/reconnect and heartbeat timeout behavior under long-running tool calls.
 - Add OpenAPI contract drift check in CI (generated artifact diff gate).
-- Start Phase 4 implementation (SubAgent orchestration and proactive capability adapters).
+- Prepare Phase 5 WebUI completion and end-to-end release quality gates.
 
 ## Notes
 

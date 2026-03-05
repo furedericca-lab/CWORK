@@ -211,6 +211,62 @@ describe('core api routes', () => {
     expect(toolsRes.statusCode).toBe(200);
     expect(toolsRes.json().items.length).toBeGreaterThanOrEqual(2);
 
+    const disableToolRes = await app.inject({
+      method: 'POST',
+      url: '/api/v1/tools/tool.echo/disable',
+      headers: authHeaders
+    });
+    expect(disableToolRes.statusCode).toBe(200);
+    expect(disableToolRes.json()).toMatchObject({ toolName: 'tool.echo', enabled: false });
+
+    const executeDisabledRes = await app.inject({
+      method: 'POST',
+      url: '/api/v1/tools/execute',
+      headers: authHeaders,
+      payload: {
+        toolName: 'tool.echo',
+        arguments: { text: 'hello' },
+        sessionId: 'sess_1'
+      }
+    });
+    expect(executeDisabledRes.statusCode).toBe(200);
+    expect(executeDisabledRes.json()).toMatchObject({ ok: false, error: { code: 'FORBIDDEN' } });
+
+    const enableToolRes = await app.inject({
+      method: 'POST',
+      url: '/api/v1/tools/tool.echo/enable',
+      headers: authHeaders
+    });
+    expect(enableToolRes.statusCode).toBe(200);
+
+    const executeEnabledRes = await app.inject({
+      method: 'POST',
+      url: '/api/v1/tools/execute',
+      headers: authHeaders,
+      payload: {
+        toolName: 'tool.echo',
+        arguments: { text: 'hello' },
+        sessionId: 'sess_1'
+      }
+    });
+    expect(executeEnabledRes.statusCode).toBe(200);
+    expect(executeEnabledRes.json()).toMatchObject({ ok: true, output: { text: 'hello' } });
+
+    const deleteToolRes = await app.inject({
+      method: 'DELETE',
+      url: '/api/v1/tools/tool.echo',
+      headers: authHeaders
+    });
+    expect(deleteToolRes.statusCode).toBe(200);
+
+    const reloadToolsRes = await app.inject({
+      method: 'POST',
+      url: '/api/v1/tools/reload',
+      headers: authHeaders
+    });
+    expect(reloadToolsRes.statusCode).toBe(200);
+    expect(reloadToolsRes.json().items.map((item: { toolName: string }) => item.toolName)).toContain('tool.echo');
+
     const executeRes = await app.inject({
       method: 'POST',
       url: '/api/v1/tools/execute',
@@ -253,6 +309,22 @@ describe('core api routes', () => {
       payload: { name: 'server1' }
     });
     expect(mcpTestRes.statusCode).toBe(200);
+
+    const mcpDisableRes = await app.inject({
+      method: 'POST',
+      url: '/api/v1/tools/mcp/disable',
+      headers: authHeaders,
+      payload: { name: 'server1' }
+    });
+    expect(mcpDisableRes.statusCode).toBe(200);
+
+    const mcpEnableRes = await app.inject({
+      method: 'POST',
+      url: '/api/v1/tools/mcp/enable',
+      headers: authHeaders,
+      payload: { name: 'server1' }
+    });
+    expect(mcpEnableRes.statusCode).toBe(200);
 
     const mcpDeleteRes = await app.inject({
       method: 'POST',

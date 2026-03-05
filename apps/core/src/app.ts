@@ -49,6 +49,10 @@ const pluginPathParamSchema = z.object({
   pluginId: z.string().min(1)
 });
 
+const toolPathParamSchema = z.object({
+  toolName: z.string().min(1)
+});
+
 const createPolicyFromEnv = (): PermissionPolicy => {
   const splitList = (value: string | undefined): string[] =>
     (value ?? '')
@@ -87,7 +91,9 @@ export async function buildApp(options: BuildAppOptions = {}) {
     }
   });
 
-  const skillManager = new SkillManager(repositories.skills);
+  const skillManager = new SkillManager(repositories.skills, {
+    sandboxEnabled: process.env.CWORK_SANDBOX_ENABLED === 'true'
+  });
   const pluginManager = new PluginManager(repositories.plugins, { policy });
 
   const app = Fastify({
@@ -196,6 +202,41 @@ export async function buildApp(options: BuildAppOptions = {}) {
     };
   });
 
+  app.post('/api/v1/tools/reload', { preHandler: requireAuth }, async () => {
+    await registerBuiltinTools(toolRegistry, mcpManager);
+    return {
+      items: await toolRegistry.list()
+    };
+  });
+
+  app.post('/api/v1/tools/:toolName/enable', { preHandler: requireAuth }, async (request) => {
+    const parsed = toolPathParamSchema.safeParse(request.params);
+    if (!parsed.success) {
+      throw new AppError(ERROR_CODE.VALIDATION_ERROR, 'Invalid tool path params', parsed.error.flatten());
+    }
+
+    return toolRegistry.toggle(parsed.data.toolName, true);
+  });
+
+  app.post('/api/v1/tools/:toolName/disable', { preHandler: requireAuth }, async (request) => {
+    const parsed = toolPathParamSchema.safeParse(request.params);
+    if (!parsed.success) {
+      throw new AppError(ERROR_CODE.VALIDATION_ERROR, 'Invalid tool path params', parsed.error.flatten());
+    }
+
+    return toolRegistry.toggle(parsed.data.toolName, false);
+  });
+
+  app.delete('/api/v1/tools/:toolName', { preHandler: requireAuth }, async (request) => {
+    const parsed = toolPathParamSchema.safeParse(request.params);
+    if (!parsed.success) {
+      throw new AppError(ERROR_CODE.VALIDATION_ERROR, 'Invalid tool path params', parsed.error.flatten());
+    }
+
+    await toolRegistry.remove(parsed.data.toolName);
+    return { ok: true };
+  });
+
   app.post('/api/v1/tools/execute', { preHandler: requireAuth }, async (request) => {
     const parsed = toolExecuteRequestSchema.safeParse(request.body);
     if (!parsed.success) {
@@ -259,6 +300,26 @@ export async function buildApp(options: BuildAppOptions = {}) {
     }
 
     return mcpManager.testServer(parsed.data.name);
+  });
+
+  app.post('/api/v1/tools/mcp/enable', { preHandler: requireAuth }, async (request) => {
+    const parsed = mcpServerNameSchema.safeParse(request.body);
+    if (!parsed.success) {
+      throw new AppError(ERROR_CODE.VALIDATION_ERROR, 'Invalid mcp enable payload', parsed.error.flatten());
+    }
+
+    await mcpManager.enableServer(parsed.data.name);
+    return { ok: true };
+  });
+
+  app.post('/api/v1/tools/mcp/disable', { preHandler: requireAuth }, async (request) => {
+    const parsed = mcpServerNameSchema.safeParse(request.body);
+    if (!parsed.success) {
+      throw new AppError(ERROR_CODE.VALIDATION_ERROR, 'Invalid mcp disable payload', parsed.error.flatten());
+    }
+
+    await mcpManager.disableServer(parsed.data.name);
+    return { ok: true };
   });
 
   app.get('/api/v1/skills', { preHandler: requireAuth }, async () => {

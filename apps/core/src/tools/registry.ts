@@ -15,6 +15,11 @@ export class ToolRegistry {
   }
 
   async remove(toolName: string): Promise<void> {
+    const found = await this.repository.get(toolName);
+    if (!found) {
+      throw new AppError(ERROR_CODE.NOT_FOUND, `Tool not found: ${toolName}`);
+    }
+
     await this.repository.delete(toolName);
     this.handlers.delete(toolName);
   }
