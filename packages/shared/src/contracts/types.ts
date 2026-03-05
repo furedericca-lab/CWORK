@@ -253,3 +253,101 @@ export interface SubagentDescriptor {
   systemPrompt?: string | undefined;
   tools: string[];
 }
+
+export interface SubagentConfigAgent {
+  subagentId: string;
+  name: string;
+  enabled: boolean;
+  providerId?: string | undefined;
+  systemPrompt?: string | undefined;
+  publicDescription?: string | undefined;
+  tools: string[];
+}
+
+export interface SubagentConfig {
+  mainEnable: boolean;
+  removeMainDuplicateTools: boolean;
+  routerSystemPrompt?: string | undefined;
+  agents: SubagentConfigAgent[];
+}
+
+export interface ProactiveJob {
+  jobId: string;
+  name: string;
+  sessionId: string;
+  prompt: string;
+  cronExpression?: string | undefined;
+  runOnce: boolean;
+  runAt?: string | undefined;
+  timezone?: string | undefined;
+  enabled: boolean;
+  status: 'pending' | 'running' | 'succeeded' | 'failed' | 'cancelled';
+  updatedAt: string;
+  lastRunAt?: string | undefined;
+  lastError?: string | undefined;
+}
+
+export interface ProactiveJobCreateRequest {
+  name: string;
+  sessionId: string;
+  prompt: string;
+  cronExpression?: string | undefined;
+  runOnce?: boolean | undefined;
+  runAt?: string | undefined;
+  timezone?: string | undefined;
+  enabled?: boolean | undefined;
+}
+
+export interface ProactiveJobListResponse {
+  items: ProactiveJob[];
+}
+
+export interface CapabilityState {
+  enabled: boolean;
+  healthy: boolean;
+  lastCheckAt?: string | undefined;
+  lastError?: string | undefined;
+}
+
+export interface CapabilityStatusResponse {
+  dify: CapabilityState;
+  plugins: CapabilityState;
+  skills: CapabilityState;
+  mcp: CapabilityState;
+  search: CapabilityState;
+  knowledge: CapabilityState;
+  sandbox: CapabilityState;
+}
+
+export interface KnowledgeDocument {
+  docId: string;
+  title: string;
+  content: string;
+  source?: string | undefined;
+  createdAt: string;
+}
+
+export interface KnowledgeTaskStatus {
+  taskId: string;
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  createdAt: string;
+  updatedAt: string;
+  error?: string | undefined;
+}
+
+export interface KnowledgeRetrieveRequest {
+  query: string;
+  topK?: number | undefined;
+}
+
+export interface KnowledgeRetrieveItem {
+  docId: string;
+  title: string;
+  snippet: string;
+  score: number;
+  citation?: string | undefined;
+}
+
+export interface KnowledgeRetrieveResponse {
+  items: KnowledgeRetrieveItem[];
+}

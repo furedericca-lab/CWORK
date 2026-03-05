@@ -200,6 +200,132 @@ describe('core api routes', () => {
     await app.close();
   });
 
+  it('supports subagent, proactive, knowledge, and capability APIs', async () => {
+    const app = await buildApp({ difyApiClient: createMockDifyApiClient() });
+
+    const subagentPut = await app.inject({
+      method: 'PUT',
+      url: '/api/v1/subagents',
+      headers: authHeaders,
+      payload: {
+        enable: true,
+        removeMainDuplicateTools: false,
+        agents: [
+          {
+            subagentId: 'research',
+            name: 'Research Agent',
+            enabled: true,
+            tools: ['web.search', 'kb.retrieve']
+          }
+        ]
+      }
+    });
+    expect(subagentPut.statusCode).toBe(200);
+
+    const availableTools = await app.inject({
+      method: 'GET',
+      url: '/api/v1/subagents/available-tools',
+      headers: authHeaders
+    });
+    expect(availableTools.statusCode).toBe(200);
+    expect(availableTools.json().items.map((item: { toolName: string }) => item.toolName)).toContain('handoff.research');
+
+    const handoffRuntime = await app.inject({
+      method: 'POST',
+      url: '/api/v1/runtime/chat',
+      headers: authHeaders,
+      payload: {
+        sessionId: 'sess_handoff',
+        message: 'route this',
+        metadata: {
+          subagentId: 'research'
+        }
+      }
+    });
+    expect(handoffRuntime.statusCode).toBe(200);
+    expect(handoffRuntime.payload).toContain('event: handoff');
+
+    const kbCreate = await app.inject({
+      method: 'POST',
+      url: '/api/v1/kb/documents',
+      headers: authHeaders,
+      payload: {
+        title: 'Dify Notes',
+        content: 'Dify is the only provider in CWORK.'
+      }
+    });
+    expect(kbCreate.statusCode).toBe(200);
+    const taskId = kbCreate.json().task.taskId as string;
+    const docId = kbCreate.json().document.docId as string;
+
+    const kbTask = await app.inject({
+      method: 'GET',
+      url: `/api/v1/kb/tasks/${taskId}`,
+      headers: authHeaders
+    });
+    expect(kbTask.statusCode).toBe(200);
+    expect(kbTask.json().status).toBe('completed');
+
+    const kbRetrieve = await app.inject({
+      method: 'POST',
+      url: '/api/v1/kb/retrieve',
+      headers: authHeaders,
+      payload: { query: 'Dify provider', topK: 3 }
+    });
+    expect(kbRetrieve.statusCode).toBe(200);
+    expect(Array.isArray(kbRetrieve.json().items)).toBe(true);
+
+    const proactiveCreate = await app.inject({
+      method: 'POST',
+      url: '/api/v1/proactive/jobs',
+      headers: authHeaders,
+      payload: {
+        name: 'once',
+        sessionId: 'sess_1',
+        prompt: 'hello',
+        runAt: new Date(Date.now() + 60_000).toISOString()
+      }
+    });
+    expect(proactiveCreate.statusCode).toBe(200);
+    const jobId = proactiveCreate.json().jobId as string;
+
+    const proactiveList = await app.inject({
+      method: 'GET',
+      url: '/api/v1/proactive/jobs',
+      headers: authHeaders
+    });
+    expect(proactiveList.statusCode).toBe(200);
+    expect(proactiveList.json().items.map((item: { jobId: string }) => item.jobId)).toContain(jobId);
+
+    const capabilityStatus = await app.inject({
+      method: 'GET',
+      url: '/api/v1/capabilities/status',
+      headers: authHeaders
+    });
+    expect(capabilityStatus.statusCode).toBe(200);
+    expect(capabilityStatus.json()).toMatchObject({
+      dify: { enabled: true },
+      knowledge: { enabled: true },
+      search: { enabled: true }
+    });
+
+    const proactiveDelete = await app.inject({
+      method: 'DELETE',
+      url: `/api/v1/proactive/jobs/${jobId}`,
+      headers: authHeaders
+    });
+    expect(proactiveDelete.statusCode).toBe(200);
+
+    const kbDelete = await app.inject({
+      method: 'DELETE',
+      url: `/api/v1/kb/documents/${docId}`,
+      headers: authHeaders
+    });
+    expect(kbDelete.statusCode).toBe(200);
+
+    await app.close();
+  });
+
   it('supports tools and mcp management endpoints', async () => {
     const app = await buildApp({ difyApiClient: createMockDifyApiClient() });
 

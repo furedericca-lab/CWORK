@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { difyConfigSchema } from './dify';
 import { pluginImportGitSchema, pluginImportLocalSchema } from './plugin';
+import { capabilityStatusResponseSchema } from './capability';
+import { knowledgeDocumentCreateSchema, knowledgeRetrieveRequestSchema } from './knowledge';
 import { mcpServerConfigSchema } from './mcp';
+import { proactiveJobCreateRequestSchema } from './proactive';
 import { skillDescriptorSchema, skillImportRequestSchema } from './skill';
-import { subagentDescriptorSchema, subagentHandoffSchema } from './subagent';
+import { subagentConfigSchema, subagentDescriptorSchema, subagentHandoffSchema } from './subagent';
 import { toolExecuteRequestSchema, toolItemSchema } from './tool';
 
 describe('difyConfigSchema', () => {
@@ -77,6 +80,20 @@ describe('skill and subagent schemas', () => {
     expect(handoff.success).toBe(true);
   });
 
+  it('supports backward-compatible subagent config mapping (enable -> mainEnable)', () => {
+    const parsed = subagentConfigSchema.safeParse({
+      enable: true,
+      removeMainDuplicateTools: true,
+      agents: []
+    });
+
+    expect(parsed.success).toBe(true);
+    if (!parsed.success) {
+      throw new Error('subagent config parse failed');
+    }
+    expect(parsed.data.mainEnable).toBe(true);
+  });
+
   it('rejects invalid subagent handoff payload', () => {
     const parsed = subagentHandoffSchema.safeParse({
       from: 'main',
@@ -136,5 +153,50 @@ describe('tool and mcp schemas', () => {
   it('accepts skill import request', () => {
     const parsed = skillImportRequestSchema.safeParse({ zipPath: '/tmp/skill.zip' });
     expect(parsed.success).toBe(true);
+  });
+});
+
+describe('phase4 schemas', () => {
+  it('validates proactive create payload', () => {
+    const valid = proactiveJobCreateRequestSchema.safeParse({
+      name: 'daily-briefing',
+      sessionId: 'sess_1',
+      prompt: 'run',
+      cronExpression: '*/10 * * * * *'
+    });
+    const invalid = proactiveJobCreateRequestSchema.safeParse({
+      name: 'bad',
+      sessionId: 'sess_1',
+      prompt: 'run'
+    });
+
+    expect(valid.success).toBe(true);
+    expect(invalid.success).toBe(false);
+  });
+
+  it('validates capability and knowledge schemas', () => {
+    const caps = capabilityStatusResponseSchema.safeParse({
+      dify: { enabled: true, healthy: true },
+      plugins: { enabled: true, healthy: true },
+      skills: { enabled: true, healthy: true },
+      mcp: { enabled: true, healthy: true },
+      search: { enabled: true, healthy: true },
+      knowledge: { enabled: true, healthy: true },
+      sandbox: { enabled: false, healthy: true }
+    });
+
+    const kbDoc = knowledgeDocumentCreateSchema.safeParse({
+      title: 'doc',
+      content: 'hello'
+    });
+
+    const kbRetrieve = knowledgeRetrieveRequestSchema.safeParse({
+      query: 'hello',
+      topK: 3
+    });
+
+    expect(caps.success).toBe(true);
+    expect(kbDoc.success).toBe(true);
+    expect(kbRetrieve.success).toBe(true);
   });
 });

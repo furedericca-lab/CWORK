@@ -1,4 +1,16 @@
-import type { DifyConfig, McpServerConfig, McpServerRuntimeState, PluginItem, SkillDescriptor, SubagentDescriptor, ToolItem } from '@cwork/shared';
+import type {
+  CapabilityStatusResponse,
+  DifyConfig,
+  KnowledgeDocument,
+  KnowledgeTaskStatus,
+  McpServerConfig,
+  McpServerRuntimeState,
+  PluginItem,
+  SkillDescriptor,
+  SubagentConfig,
+  SubagentDescriptor,
+  ToolItem
+} from '@cwork/shared';
 import type { CoreRepositories, ProactiveJobRecord, SessionRecord } from './interfaces';
 
 const defaultDifyConfig: DifyConfig = {
@@ -12,6 +24,23 @@ const defaultDifyConfig: DifyConfig = {
   variables: {}
 };
 
+const defaultSubagentConfig: SubagentConfig = {
+  mainEnable: true,
+  removeMainDuplicateTools: false,
+  routerSystemPrompt: 'Route to a specialized subagent when needed.',
+  agents: []
+};
+
+const defaultCapabilities: CapabilityStatusResponse = {
+  dify: { enabled: true, healthy: true },
+  plugins: { enabled: true, healthy: true },
+  skills: { enabled: true, healthy: true },
+  mcp: { enabled: true, healthy: true },
+  search: { enabled: true, healthy: true },
+  knowledge: { enabled: true, healthy: true },
+  sandbox: { enabled: false, healthy: true }
+};
+
 export const createInMemoryRepositories = (): CoreRepositories => {
   const sessionStore = new Map<string, SessionRecord>();
   const pluginStore = new Map<string, PluginItem>();
@@ -21,7 +50,11 @@ export const createInMemoryRepositories = (): CoreRepositories => {
   const toolStore = new Map<string, ToolItem>();
   const mcpStore = new Map<string, McpServerConfig>();
   const mcpRuntimeStore = new Map<string, McpServerRuntimeState>();
+  const knowledgeDocStore = new Map<string, KnowledgeDocument>();
+  const knowledgeTaskStore = new Map<string, KnowledgeTaskStatus>();
   let difyConfig = structuredClone(defaultDifyConfig);
+  let subagentConfig = structuredClone(defaultSubagentConfig);
+  let capabilities = structuredClone(defaultCapabilities);
 
   return {
     sessions: {
@@ -81,16 +114,69 @@ export const createInMemoryRepositories = (): CoreRepositories => {
       async list() {
         return Array.from(subagentStore.values());
       },
+      async get(subagentId) {
+        return subagentStore.get(subagentId) ?? null;
+      },
       async upsert(item) {
         subagentStore.set(item.subagentId, item);
+      },
+      async delete(subagentId) {
+        subagentStore.delete(subagentId);
+      }
+    },
+    subagentConfig: {
+      async get() {
+        return structuredClone(subagentConfig);
+      },
+      async set(nextConfig) {
+        subagentConfig = structuredClone(nextConfig);
+        return structuredClone(subagentConfig);
       }
     },
     proactive: {
       async list() {
         return Array.from(proactiveStore.values());
       },
+      async get(jobId) {
+        return proactiveStore.get(jobId) ?? null;
+      },
       async upsert(item) {
         proactiveStore.set(item.jobId, item);
+      },
+      async delete(jobId) {
+        proactiveStore.delete(jobId);
+      }
+    },
+    capabilities: {
+      async get() {
+        return structuredClone(capabilities);
+      },
+      async set(next) {
+        capabilities = structuredClone(next);
+        return structuredClone(capabilities);
+      }
+    },
+    knowledge: {
+      async listDocuments() {
+        return Array.from(knowledgeDocStore.values());
+      },
+      async getDocument(docId) {
+        return knowledgeDocStore.get(docId) ?? null;
+      },
+      async upsertDocument(doc) {
+        knowledgeDocStore.set(doc.docId, doc);
+      },
+      async deleteDocument(docId) {
+        knowledgeDocStore.delete(docId);
+      },
+      async listTasks() {
+        return Array.from(knowledgeTaskStore.values());
+      },
+      async getTask(taskId) {
+        return knowledgeTaskStore.get(taskId) ?? null;
+      },
+      async upsertTask(task) {
+        knowledgeTaskStore.set(task.taskId, task);
       }
     },
     tools: {

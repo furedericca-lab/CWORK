@@ -1,9 +1,14 @@
 import type {
+  CapabilityStatusResponse,
   DifyConfig,
+  KnowledgeDocument,
+  KnowledgeTaskStatus,
   McpServerConfig,
   McpServerRuntimeState,
   PluginItem,
+  ProactiveJob,
   RuntimeSessionItem,
+  SubagentConfig,
   SkillDescriptor,
   SubagentDescriptor,
   ToolItem
@@ -43,19 +48,38 @@ export interface SkillRepository {
 
 export interface SubagentRepository {
   list(): Promise<SubagentDescriptor[]>;
+  get(subagentId: string): Promise<SubagentDescriptor | null>;
   upsert(item: SubagentDescriptor): Promise<void>;
+  delete(subagentId: string): Promise<void>;
 }
 
-export interface ProactiveJobRecord {
-  jobId: string;
-  cron: string;
-  status: 'pending' | 'running' | 'succeeded' | 'failed' | 'cancelled';
-  updatedAt: string;
-}
+export type ProactiveJobRecord = ProactiveJob;
 
 export interface ProactiveRepository {
   list(): Promise<ProactiveJobRecord[]>;
+  get(jobId: string): Promise<ProactiveJobRecord | null>;
   upsert(item: ProactiveJobRecord): Promise<void>;
+  delete(jobId: string): Promise<void>;
+}
+
+export interface SubagentConfigRepository {
+  get(): Promise<SubagentConfig>;
+  set(nextConfig: SubagentConfig): Promise<SubagentConfig>;
+}
+
+export interface CapabilityStateRepository {
+  get(): Promise<CapabilityStatusResponse>;
+  set(next: CapabilityStatusResponse): Promise<CapabilityStatusResponse>;
+}
+
+export interface KnowledgeRepository {
+  listDocuments(): Promise<KnowledgeDocument[]>;
+  getDocument(docId: string): Promise<KnowledgeDocument | null>;
+  upsertDocument(doc: KnowledgeDocument): Promise<void>;
+  deleteDocument(docId: string): Promise<void>;
+  listTasks(): Promise<KnowledgeTaskStatus[]>;
+  getTask(taskId: string): Promise<KnowledgeTaskStatus | null>;
+  upsertTask(task: KnowledgeTaskStatus): Promise<void>;
 }
 
 export interface ToolRepository {
@@ -80,7 +104,10 @@ export interface CoreRepositories {
   plugins: PluginRepository;
   skills: SkillRepository;
   subagents: SubagentRepository;
+  subagentConfig: SubagentConfigRepository;
   proactive: ProactiveRepository;
+  capabilities: CapabilityStateRepository;
+  knowledge: KnowledgeRepository;
   tools: ToolRepository;
   mcp: McpRepository;
 }

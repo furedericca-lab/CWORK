@@ -24,7 +24,13 @@ export class RuntimeChatService {
     this.difyRunner = new DifyRunner(this.difyConfigService, apiClient ?? new DifyApiClient());
   }
 
-  async run(input: RunRuntimeChatInput, toolExecutor?: ToolExecutor): Promise<{ sessionId: string }> {
+  async run(
+    input: RunRuntimeChatInput,
+    options?: {
+      toolExecutor?: ToolExecutor;
+      state?: Record<string, unknown>;
+    }
+  ): Promise<{ sessionId: string }> {
     const receivedAt = new Date().toISOString();
     const sessionId = input.request.sessionId ?? `sess_${randomUUID()}`;
     const session = await this.ensureSession(sessionId, input.request, receivedAt);
@@ -39,7 +45,8 @@ export class RuntimeChatService {
       sseEvents: [],
       writer: input.writer,
       state: {
-        ...(toolExecutor ? { toolExecutor } : {})
+        ...(options?.toolExecutor ? { toolExecutor: options.toolExecutor } : {}),
+        ...(options?.state ?? {})
       }
     };
 

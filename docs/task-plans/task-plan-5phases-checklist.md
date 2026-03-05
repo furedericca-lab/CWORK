@@ -14,7 +14,7 @@ This document is the single checklist hub for:
 4. Mark a phase as `Completed` only after all exit criteria are verified.
 
 ## Global Status
-- Overall Program Status: `In Progress (Phase 1-3 Completed)`
+- Overall Program Status: `In Progress (Phase 1-3 Completed, Phase 4 In Progress)`
 - Last Updated: `2026-03-05`
 - Owner: `Codex + User`
 
@@ -31,7 +31,7 @@ This document is the single checklist hub for:
 | 1 | Foundation and Contract Freeze | Completed | 100% | Healthy | 0 |
 | 2 | Core Runtime and Dify Provider | Completed | 100% | Healthy | 0 |
 | 3 | Tools, Skills, and Plugin Runtime | Completed | 100% | Healthy | 0 |
-| 4 | SubAgent, Proactive, Capability Adapters | Not Started | 0% | Unknown | 0 |
+| 4 | SubAgent, Proactive, Capability Adapters | In Progress | 85% | Healthy | 0 |
 | 5 | WebUI Completion, Quality, and Release | Not Started | 0% | Unknown | 0 |
 
 ## Phase 1 Checklist
@@ -150,26 +150,39 @@ This document is the single checklist hub for:
 
 ## Phase 4 Checklist
 - Phase Document: [task-plan-phase-4-subagent-proactive-capabilities.md](/root/code/CWORK/docs/task-plans/task-plan-phase-4-subagent-proactive-capabilities.md)
-- Phase Status: `Not Started`
-- Completion: `0%`
-- Implementation Health: `Unknown`
+- Phase Status: `In Progress`
+- Completion: `85%`
+- Implementation Health: `Healthy`
 
 ### Completion Checklist
 - [ ] All Phase 4 tasks completed.
-- [ ] All Phase 4 verification commands passed.
+- [x] All Phase 4 verification commands passed.
 - [ ] Phase 4 exit criteria validated.
 
 ### Implementation Progress Notes
-- `TBD`
+- Added SubAgent config model + normalization (`enable` backward mapping) and orchestrator-driven handoff tool lifecycle.
+- Added SubAgent API set (`GET/PUT /subagents`, `GET /subagents/available-tools`) and runtime `handoff` SSE tracing.
+- Added proactive domain manager and startup-restored scheduler with pipeline re-entry metadata (`origin=cron_job`, `cronJobId`).
+- Added proactive APIs (`GET/POST/DELETE /proactive/jobs`) with audit logging for create/delete.
+- Added capability adapters and tools:
+  - `web.search` unified adapter (`default|tavily|bocha|baidu_ai_search` shape)
+  - knowledge manager + `kb.retrieve` tool + KB APIs (`/kb/documents`, `/kb/tasks/:taskId`, `/kb/retrieve`)
+  - sandbox runtime adapter with mode-based tool registration (`sandbox.exec` in sandbox mode)
+- Added capability status aggregation endpoint: `GET /capabilities/status`.
+- Added audit logger and wired high-risk operation audit trails (`plugin import`, `proactive create/delete`, `sandbox.exec`).
+- Expanded shared contracts/schemas for phase-4 entities (subagent config, proactive job, capability status, knowledge types).
 
 ### Evidence (Commands / CI / PRs)
-- `TBD`
+- `pnpm -r lint` (passed)
+- `pnpm -r typecheck` (passed)
+- `pnpm -r test` (passed; shared: 15 tests, core: 57 tests)
+- `pnpm -r build` (passed)
 
 ### Issues and Blockers
-- None.
+- No blocking issue currently.
 
 ### Resolutions and Decisions
-- None.
+- Implemented deterministic scheduler baseline with support for one-shot jobs and interval-style cron expressions (`*/N` seconds/minutes) for runtime safety in this phase.
 
 ## Phase 5 Checklist
 - Phase Document: [task-plan-phase-5-webui-quality-and-release.md](/root/code/CWORK/docs/task-plans/task-plan-phase-5-webui-quality-and-release.md)

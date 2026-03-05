@@ -65,7 +65,12 @@ describe('in-memory repositories', () => {
     });
     await repo.proactive.upsert({
       jobId: 'job_daily',
-      cron: '0 8 * * *',
+      name: 'daily',
+      sessionId: 'sess_1',
+      prompt: 'daily prompt',
+      cronExpression: '0 8 * * *',
+      runOnce: false,
+      enabled: true,
       status: 'pending',
       updatedAt: '2026-03-05T00:00:00.000Z'
     });
@@ -88,6 +93,30 @@ describe('in-memory repositories', () => {
       enabled: true,
       healthy: false
     });
+    await repo.subagentConfig.set({
+      mainEnable: true,
+      removeMainDuplicateTools: false,
+      agents: [
+        {
+          subagentId: 'research',
+          name: 'Research',
+          enabled: true,
+          tools: ['web.search']
+        }
+      ]
+    });
+    await repo.knowledge.upsertTask({
+      taskId: 'task_1',
+      status: 'completed',
+      createdAt: '2026-03-05T00:00:00.000Z',
+      updatedAt: '2026-03-05T00:00:00.000Z'
+    });
+    await repo.knowledge.upsertDocument({
+      docId: 'doc_1',
+      title: 'Doc',
+      content: 'Knowledge',
+      createdAt: '2026-03-05T00:00:00.000Z'
+    });
 
     const config = await repo.difyConfig.get();
     const plugins = await repo.plugins.list();
@@ -97,6 +126,10 @@ describe('in-memory repositories', () => {
     const tools = await repo.tools.list();
     const mcp = await repo.mcp.list();
     const mcpState = await repo.mcp.getRuntimeState('mcp1');
+    const subagentConfig = await repo.subagentConfig.get();
+    const capabilityStatus = await repo.capabilities.get();
+    const kbTasks = await repo.knowledge.listTasks();
+    const kbDocs = await repo.knowledge.listDocuments();
 
     expect(config.providerId).toBe('default');
     expect(plugins).toHaveLength(1);
@@ -106,5 +139,9 @@ describe('in-memory repositories', () => {
     expect(tools).toHaveLength(1);
     expect(mcp).toHaveLength(1);
     expect(mcpState?.name).toBe('mcp1');
+    expect(subagentConfig.agents).toHaveLength(1);
+    expect(capabilityStatus.dify.enabled).toBe(true);
+    expect(kbTasks).toHaveLength(1);
+    expect(kbDocs).toHaveLength(1);
   });
 });

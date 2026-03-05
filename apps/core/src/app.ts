@@ -1,19 +1,30 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import {
+  knowledgeDocumentCreateSchema,
+  knowledgeRetrieveRequestSchema,
   mcpServerConfigSchema,
   mcpServerNameSchema,
   pluginImportGitSchema,
   pluginImportLocalSchema,
+  proactiveJobCreateRequestSchema,
   runtimeChatRequestSchema,
   skillImportRequestSchema,
+  subagentConfigSchema,
   toolExecuteRequestSchema,
+  type CapabilityStatusResponse,
   type DifyConfigMaskedView,
   type HealthzResponse,
+  type ProactiveJobListResponse,
   type ReadyzResponse,
-  type RuntimeSessionsResponse
+  type RuntimeSessionsResponse,
+  type SubagentConfig
 } from '@cwork/shared';
 import { z } from 'zod';
+import { CapabilityStatusService } from './capabilities/status-service';
+import { KnowledgeManager } from './capabilities/knowledge/manager';
+import { WebSearchAdapter } from './capabilities/search/adapter';
+import { SandboxAdapter, type RuntimeMode } from './capabilities/sandbox/adapter';
 import { AppError } from './errors/app-error';
 import { ERROR_CODE } from './errors/error-code';
 import { mapErrorToHttp } from './errors/http-error-mapper';
@@ -21,11 +32,16 @@ import { DifyApiClient } from './dify/api-client';
 import { DifyConfigService } from './dify/dify-config.service';
 import { McpRuntimeManager } from './mcp/runtime-manager';
 import { PermissionPolicy } from './policy/permissions';
+import { ProactiveManager } from './proactive/manager';
+import { createNoopSseWriter } from './proactive/noop-writer';
+import { ProactiveScheduler } from './proactive/scheduler';
 import { createInMemoryRepositories } from './repo/memory';
 import type { CoreRepositories } from './repo/interfaces';
 import { PluginManager } from './plugins/manager';
 import { RuntimeChatService } from './runtime/runtime-chat.service';
+import { AuditLogger } from './security/audit-log';
 import { SkillManager } from './skills/manager';
+import { SubagentOrchestrator } from './subagents/orchestrator';
 import { verifyBearerToken } from './security/auth-middleware';
 import { applyRequestIdHeader, genRequestId } from './security/request-id-middleware';
 import { redactSensitiveValue } from './security/redact';
@@ -53,6 +69,18 @@ const toolPathParamSchema = z.object({
   toolName: z.string().min(1)
 });
 
+const proactiveJobPathParamSchema = z.object({
+  jobId: z.string().min(1)
+});
+
+const knowledgeDocPathParamSchema = z.object({
+  docId: z.string().min(1)
+});
+
+const knowledgeTaskPathParamSchema = z.object({
+  taskId: z.string().min(1)
+});
+
 const createPolicyFromEnv = (): PermissionPolicy => {
   const splitList = (value: string | undefined): string[] =>
     (value ?? '')
@@ -68,6 +96,13 @@ const createPolicyFromEnv = (): PermissionPolicy => {
   });
 };
 
+const resolveRuntimeMode = (value: string | undefined): RuntimeMode => {
+  if (value === 'local' || value === 'sandbox' || value === 'none') {
+    return value;
+  }
+  return 'none';
+};
+
 export interface BuildAppOptions {
   authToken?: string;
   repositories?: CoreRepositories;
@@ -80,9 +115,30 @@ export async function buildApp(options: BuildAppOptions = {}) {
   const difyConfigService = new DifyConfigService(repositories.difyConfig);
   const runtimeChatService = new RuntimeChatService(repositories, options.difyApiClient);
 
+  const app = Fastify({
+    logger: true,
+    genReqId: (request) => genRequestId(request)
+  });
+
   const policy = createPolicyFromEnv();
   const mcpManager = new McpRuntimeManager(repositories.mcp);
   const toolRegistry = new ToolRegistry(repositories.tools);
+  const auditLogger = new AuditLogger(app.log);
+  const searchAdapter = new WebSearchAdapter(process.env.CWORK_SEARCH_PROVIDER);
+  const knowledgeManager = new KnowledgeManager(repositories.knowledge);
+  const sandboxAdapter = new SandboxAdapter({
+    mode: resolveRuntimeMode(process.env.CWORK_RUNTIME_MODE),
+    onAudit: (payload) => {
+      auditLogger.log({
+        action: payload.action,
+        requestId: payload.requestId,
+        actor: 'system',
+        result: payload.result,
+        ...(payload.details ? { details: payload.details } : {})
+      });
+    }
+  });
+
   const toolExecutor = new ToolExecutor(toolRegistry, {
     policy,
     logger: {
@@ -95,15 +151,47 @@ export async function buildApp(options: BuildAppOptions = {}) {
     sandboxEnabled: process.env.CWORK_SANDBOX_ENABLED === 'true'
   });
   const pluginManager = new PluginManager(repositories.plugins, { policy });
-
-  const app = Fastify({
-    logger: true,
-    genReqId: (request) => genRequestId(request)
+  const subagentOrchestrator = new SubagentOrchestrator(repositories.subagents, repositories.subagentConfig, toolRegistry);
+  const proactiveManager = new ProactiveManager(repositories.proactive);
+  const capabilityStatusService = new CapabilityStatusService(repositories, searchAdapter, knowledgeManager, sandboxAdapter);
+  const proactiveScheduler = new ProactiveScheduler(proactiveManager, {
+    onRun: async (job) => {
+      await runtimeChatService.run(
+        {
+          requestId: `proactive_${job.jobId}_${Date.now()}`,
+          request: {
+            sessionId: job.sessionId,
+            message: job.prompt,
+            enableStreaming: true,
+            metadata: {
+              origin: 'cron_job',
+              cronJobId: job.jobId
+            }
+          },
+          writer: createNoopSseWriter()
+        },
+        {
+          toolExecutor,
+          state: { subagentOrchestrator }
+        }
+      );
+    },
+    logger: {
+      info: (payload, message) => app.log.info(payload, message),
+      error: (payload, message) => app.log.error(payload, message)
+    }
   });
 
-  await registerBuiltinTools(toolRegistry, mcpManager);
+  await registerBuiltinTools(toolRegistry, {
+    mcpManager,
+    searchAdapter,
+    knowledgeManager,
+    sandboxAdapter
+  });
   await skillManager.ensureRoot();
   await pluginManager.ensureRoot();
+  await subagentOrchestrator.initialize();
+  await proactiveScheduler.start();
 
   app.setErrorHandler((error, request, reply) => {
     const errorLike = error instanceof Error ? error : new Error('Unknown error');
@@ -182,7 +270,10 @@ export async function buildApp(options: BuildAppOptions = {}) {
         request: parsed.data,
         writer
       },
-      toolExecutor
+      {
+        toolExecutor,
+        state: { subagentOrchestrator }
+      }
     );
 
     app.log.info(
@@ -196,6 +287,26 @@ export async function buildApp(options: BuildAppOptions = {}) {
     return reply;
   });
 
+  app.get('/api/v1/subagents', { preHandler: requireAuth }, async (): Promise<SubagentConfig> => {
+    return subagentOrchestrator.getConfig();
+  });
+
+  app.put('/api/v1/subagents', { preHandler: requireAuth }, async (request): Promise<SubagentConfig> => {
+    const parsed = subagentConfigSchema.safeParse(request.body);
+    if (!parsed.success) {
+      throw new AppError(ERROR_CODE.VALIDATION_ERROR, 'Invalid subagent config payload', parsed.error.flatten());
+    }
+
+    const updated = await subagentOrchestrator.updateConfig(parsed.data);
+    return updated;
+  });
+
+  app.get('/api/v1/subagents/available-tools', { preHandler: requireAuth }, async () => {
+    return {
+      items: await subagentOrchestrator.listAvailableTools()
+    };
+  });
+
   app.get('/api/v1/tools', { preHandler: requireAuth }, async () => {
     return {
       items: await toolRegistry.list()
@@ -203,7 +314,13 @@ export async function buildApp(options: BuildAppOptions = {}) {
   });
 
   app.post('/api/v1/tools/reload', { preHandler: requireAuth }, async () => {
-    await registerBuiltinTools(toolRegistry, mcpManager);
+    await registerBuiltinTools(toolRegistry, {
+      mcpManager,
+      searchAdapter,
+      knowledgeManager,
+      sandboxAdapter
+    });
+    await subagentOrchestrator.initialize();
     return {
       items: await toolRegistry.list()
     };
@@ -322,6 +439,95 @@ export async function buildApp(options: BuildAppOptions = {}) {
     return { ok: true };
   });
 
+  app.get('/api/v1/capabilities/status', { preHandler: requireAuth }, async (): Promise<CapabilityStatusResponse> => {
+    return capabilityStatusService.getStatus();
+  });
+
+  app.get('/api/v1/proactive/jobs', { preHandler: requireAuth }, async (): Promise<ProactiveJobListResponse> => {
+    return {
+      items: await proactiveManager.listJobs()
+    };
+  });
+
+  app.post('/api/v1/proactive/jobs', { preHandler: requireAuth }, async (request) => {
+    const parsed = proactiveJobCreateRequestSchema.safeParse(request.body);
+    if (!parsed.success) {
+      throw new AppError(ERROR_CODE.VALIDATION_ERROR, 'Invalid proactive create payload', parsed.error.flatten());
+    }
+
+    const created = await proactiveManager.createJob(parsed.data);
+    await proactiveScheduler.onJobCreated(created);
+    auditLogger.log({
+      action: 'proactive.create',
+      requestId: request.id,
+      actor: 'api',
+      result: 'success',
+      details: { jobId: created.jobId }
+    });
+
+    return created;
+  });
+
+  app.delete('/api/v1/proactive/jobs/:jobId', { preHandler: requireAuth }, async (request) => {
+    const parsed = proactiveJobPathParamSchema.safeParse(request.params);
+    if (!parsed.success) {
+      throw new AppError(ERROR_CODE.VALIDATION_ERROR, 'Invalid proactive path params', parsed.error.flatten());
+    }
+
+    await proactiveManager.deleteJob(parsed.data.jobId);
+    proactiveScheduler.onJobDeleted(parsed.data.jobId);
+    auditLogger.log({
+      action: 'proactive.delete',
+      requestId: request.id,
+      actor: 'api',
+      result: 'success',
+      details: { jobId: parsed.data.jobId }
+    });
+
+    return { ok: true };
+  });
+
+  app.get('/api/v1/kb/documents', { preHandler: requireAuth }, async () => {
+    return {
+      items: await knowledgeManager.listDocuments()
+    };
+  });
+
+  app.post('/api/v1/kb/documents', { preHandler: requireAuth }, async (request) => {
+    const parsed = knowledgeDocumentCreateSchema.safeParse(request.body);
+    if (!parsed.success) {
+      throw new AppError(ERROR_CODE.VALIDATION_ERROR, 'Invalid knowledge document payload', parsed.error.flatten());
+    }
+    return knowledgeManager.createDocument(parsed.data);
+  });
+
+  app.get('/api/v1/kb/tasks/:taskId', { preHandler: requireAuth }, async (request) => {
+    const parsed = knowledgeTaskPathParamSchema.safeParse(request.params);
+    if (!parsed.success) {
+      throw new AppError(ERROR_CODE.VALIDATION_ERROR, 'Invalid knowledge task params', parsed.error.flatten());
+    }
+
+    return knowledgeManager.getTask(parsed.data.taskId);
+  });
+
+  app.post('/api/v1/kb/retrieve', { preHandler: requireAuth }, async (request) => {
+    const parsed = knowledgeRetrieveRequestSchema.safeParse(request.body);
+    if (!parsed.success) {
+      throw new AppError(ERROR_CODE.VALIDATION_ERROR, 'Invalid knowledge retrieve payload', parsed.error.flatten());
+    }
+
+    return knowledgeManager.retrieve(parsed.data);
+  });
+
+  app.delete('/api/v1/kb/documents/:docId', { preHandler: requireAuth }, async (request) => {
+    const parsed = knowledgeDocPathParamSchema.safeParse(request.params);
+    if (!parsed.success) {
+      throw new AppError(ERROR_CODE.VALIDATION_ERROR, 'Invalid knowledge document params', parsed.error.flatten());
+    }
+    await knowledgeManager.deleteDocument(parsed.data.docId);
+    return { ok: true };
+  });
+
   app.get('/api/v1/skills', { preHandler: requireAuth }, async () => {
     return {
       items: await skillManager.list(),
@@ -394,8 +600,26 @@ export async function buildApp(options: BuildAppOptions = {}) {
     if (!parsed.success) {
       throw new AppError(ERROR_CODE.VALIDATION_ERROR, 'Invalid plugin import local payload', parsed.error.flatten());
     }
-
-    return pluginManager.importLocal(parsed.data);
+    try {
+      const result = await pluginManager.importLocal(parsed.data);
+      auditLogger.log({
+        action: 'plugin.import.local',
+        requestId: request.id,
+        actor: 'api',
+        result: 'success',
+        details: { pluginId: result.pluginId }
+      });
+      return result;
+    } catch (error) {
+      auditLogger.log({
+        action: 'plugin.import.local',
+        requestId: request.id,
+        actor: 'api',
+        result: 'failure',
+        details: { reason: error instanceof Error ? error.message : String(error) }
+      });
+      throw error;
+    }
   });
 
   app.post('/api/v1/plugins/import/git', { preHandler: requireAuth }, async (request) => {
@@ -403,8 +627,26 @@ export async function buildApp(options: BuildAppOptions = {}) {
     if (!parsed.success) {
       throw new AppError(ERROR_CODE.VALIDATION_ERROR, 'Invalid plugin import git payload', parsed.error.flatten());
     }
-
-    return pluginManager.importGit(parsed.data);
+    try {
+      const result = await pluginManager.importGit(parsed.data);
+      auditLogger.log({
+        action: 'plugin.import.git',
+        requestId: request.id,
+        actor: 'api',
+        result: 'success',
+        details: { pluginId: result.pluginId }
+      });
+      return result;
+    } catch (error) {
+      auditLogger.log({
+        action: 'plugin.import.git',
+        requestId: request.id,
+        actor: 'api',
+        result: 'failure',
+        details: { reason: error instanceof Error ? error.message : String(error) }
+      });
+      throw error;
+    }
   });
 
   app.post('/api/v1/plugins/:pluginId/enable', { preHandler: requireAuth }, async (request) => {
@@ -445,6 +687,7 @@ export async function buildApp(options: BuildAppOptions = {}) {
   });
 
   app.addHook('onClose', async () => {
+    await proactiveScheduler.stop();
     await mcpManager.shutdown();
   });
 
