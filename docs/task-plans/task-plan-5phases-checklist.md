@@ -14,7 +14,7 @@ This document is the single checklist hub for:
 4. Mark a phase as `Completed` only after all exit criteria are verified.
 
 ## Global Status
-- Overall Program Status: `In Progress (Phase 1-4 Completed, Phase 5 Not Started)`
+- Overall Program Status: `In Progress (Phase 1-4 Completed, Phase 5 In Progress)`
 - Last Updated: `2026-03-05`
 - Owner: `Codex + User`
 
@@ -32,7 +32,7 @@ This document is the single checklist hub for:
 | 2 | Core Runtime and Dify Provider | Completed | 100% | Healthy | 0 |
 | 3 | Tools, Skills, and Plugin Runtime | Completed | 100% | Healthy | 0 |
 | 4 | SubAgent, Proactive, Capability Adapters | Completed | 100% | Healthy | 0 |
-| 5 | WebUI Completion, Quality, and Release | Not Started | 0% | Unknown | 0 |
+| 5 | WebUI Completion, Quality, and Release | In Progress | 35% | Healthy | 0 |
 
 ## Phase 1 Checklist
 - Phase Document: [task-plan-phase-1-foundation-and-contracts.md](/root/code/CWORK/docs/task-plans/task-plan-phase-1-foundation-and-contracts.md)
@@ -198,26 +198,54 @@ This document is the single checklist hub for:
 
 ## Phase 5 Checklist
 - Phase Document: [task-plan-phase-5-webui-quality-and-release.md](/root/code/CWORK/docs/task-plans/task-plan-phase-5-webui-quality-and-release.md)
-- Phase Status: `Not Started`
-- Completion: `0%`
-- Implementation Health: `Unknown`
+- Phase Status: `In Progress`
+- Completion: `35%`
+- Implementation Health: `Healthy`
 
 ### Completion Checklist
 - [ ] All Phase 5 tasks completed.
-- [ ] All Phase 5 verification commands passed.
+- [x] Current implemented scope verification commands passed.
 - [ ] Phase 5 exit criteria validated.
 
 ### Implementation Progress Notes
-- `TBD`
+- Completed WebUI v1 operations console foundation:
+  - page navigation shell and diagnostics sidebar
+  - API token management and persistence
+  - unified request trace panel with `x-request-id` correlation
+- Completed typed API client finalization (`apps/web/src/api/client.ts`):
+  - centralized error model (`ApiError`)
+  - typed wrappers for runtime/dify/plugins/skills/tools/mcp/subagents/proactive/capabilities/knowledge
+  - SSE parser and runtime stream consumer helpers
+- Completed runtime console page:
+  - session selector
+  - SSE event timeline (`meta/delta/tool/handoff/capability/final_result/error/done`)
+  - final message rendering
+- Completed management pages:
+  - Dify settings form (`/config/dify`)
+  - plugin lifecycle UI
+  - skills lifecycle UI + tools debug execution UI
+  - knowledge document create/retrieve/delete UI
+  - MCP server management UI
+  - subagent JSON editor + available tool list
+  - proactive jobs create/delete/list UI
+  - capability health overview panel
 
 ### Evidence (Commands / CI / PRs)
-- `TBD`
+- `pnpm --filter @cwork/web lint` (passed)
+- `pnpm --filter @cwork/web typecheck` (passed)
+- `pnpm --filter @cwork/web test` (passed)
+- `pnpm --filter @cwork/web build` (passed)
+- `pnpm -r lint` (passed)
+- `pnpm -r typecheck` (passed)
+- `pnpm -r test` (passed; web: 2 files/3 tests, core: 28 files/60 tests)
+- `pnpm -r build` (passed)
 
 ### Issues and Blockers
-- None.
+- No blocking issue currently.
 
 ### Resolutions and Decisions
-- None.
+- Chose single-shell multi-page WebUI (no extra router dependency) to accelerate full operational coverage in Phase 5.
+- Chose centralized typed client + per-request trace emission to satisfy diagnostics and request correlation requirements early.
 
 ## Final Release Gate
 - [ ] All 5 phases marked `Completed`.

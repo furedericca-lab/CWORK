@@ -55,11 +55,14 @@ Reference implementations:
 
 ## What Still Needs Improvement
 
-- Complete Phase 5 implementation (WebUI completion, UX hardening, and release checks).
-- Add stronger runtime observability coverage (request lifecycle snapshots and latency histograms).
+- Complete remaining Phase 5 closure items:
+  - security hardening pass and auth/redaction coverage report
+  - full CI test matrix with `e2e` and flaky guardrails
+  - performance/reliability scripted baselines
+  - packaging/deployment docs and release checklist dry-run
+- Add stronger runtime observability coverage (latency histograms and richer lifecycle snapshots).
 - Expand SSE robustness tests for disconnect/reconnect and heartbeat timeout behavior under long-running tool calls.
 - Add OpenAPI contract drift check in CI (generated artifact diff gate).
-- Prepare end-to-end release quality gates.
 
 ## Notes
 

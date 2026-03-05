@@ -212,6 +212,49 @@ Excluded:
 1. `phase-5/webui-quality-release`
 2. Merge gate requires complete test matrix and release checklist evidence.
 
+## 10. Execution Progress (2026-03-05 Batch 1)
+Completed in this batch:
+1. P5-T001 Typed API Client Finalization
+- Added full typed client wrappers in `apps/web/src/api/client.ts`.
+- Added centralized error mapping with `ApiError`.
+- Added request-trace emission and SSE parsing helpers.
+2. P5-T002 Runtime Console UI
+- Added runtime console with session selector, chat submit, SSE timeline, and final output rendering.
+3. P5-T003 Dify Settings UI
+- Added Dify config form with schema-aligned fields and save flow.
+4. P5-T004 Plugin Manager UI
+- Added import local/git + enable/disable/reload/uninstall controls.
+5. P5-T005 Skills and Tools UI
+- Added skill reload/import/toggle/delete.
+- Added tools inventory and debug execute panel.
+6. P5-T006 MCP Management UI
+- Added add/update/test/enable/disable/delete controls.
+7. P5-T007 SubAgent and Proactive UI
+- Added subagent config JSON editor + available tool list.
+- Added proactive job create/list/delete operations.
+8. P5-T008 Capability Health UI
+- Added overview capability health panel for all required capabilities.
+9. P5-T009 Structured Telemetry and Diagnostics
+- Added frontend request trace panel with `x-request-id` correlation.
+
+Validation evidence for this batch:
+1. `pnpm --filter @cwork/web lint`
+2. `pnpm --filter @cwork/web typecheck`
+3. `pnpm --filter @cwork/web test`
+4. `pnpm --filter @cwork/web build`
+5. `pnpm -r lint`
+6. `pnpm -r typecheck`
+7. `pnpm -r test`
+8. `pnpm -r build`
+
+Remaining tasks for phase completion:
+1. P5-T010 Security hardening pass (audit baseline and auth/redaction report).
+2. P5-T011 Full CI test matrix completion (`e2e` and flaky guardrails).
+3. P5-T012 Performance/reliability baseline scripts.
+4. P5-T013 Packaging and deployment refinements.
+5. P5-T014 Operations documentation set.
+6. P5-T015 Release readiness checklist and dry-run evidence.
+
 ---
-Status: Ready for execution.
+Status: In Progress.
 Date: 2026-03-05
