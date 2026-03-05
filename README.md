@@ -133,6 +133,6 @@ Use `pnpm release:check` as the one-shot gate.
 
 ## Project Docs
 
-- `docs/technical-documentation-v1.md`
-- `docs/api-contracts-v1.md`
-- `docs/astrbot-refactor-task-plans/5phases-checklist.md`
+- `docs/astrbot-refactor/technical-documentation.md`
+- `docs/astrbot-refactor/astrbot-refactor-contracts.md`
+- `docs/astrbot-refactor/task-plans/5phases-checklist.md`
