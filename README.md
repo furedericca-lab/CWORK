@@ -44,6 +44,23 @@ Start here:
 - `docs/api-contracts.md` – API/SSE contract draft + shared type draft
 - `docs/task-plans/` – milestone checklists and phased implementation plan
 
+Progress management:
+- Source of truth checklist: `docs/task-plans/task-plan-5phases-checklist.md`
+- Current implementation must follow the phase plans linked from that checklist.
+
+Reference implementations:
+- `AstrBot`: `/root/work/AstrBot`
+- `open-cowork`: `/root/work/open-cowork`
+- `openclaw`: `/root/work/openclaw`
+
+## What Still Needs Improvement
+
+- Complete Phase 2 Dify integration hardening with real-provider live tests against non-mock Dify endpoints.
+- Add stronger runtime observability coverage (request lifecycle snapshots and latency histograms).
+- Expand SSE robustness tests for disconnect/reconnect and heartbeat timeout behavior.
+- Add OpenAPI contract drift check in CI (generated artifact diff gate).
+- Start Phase 3 implementation (tools/skills/plugin runtime) after Phase 2 exit criteria is fully validated.
+
 ## Notes
 
 - Local Codex state (`.codex/`) is intentionally **gitignored**.

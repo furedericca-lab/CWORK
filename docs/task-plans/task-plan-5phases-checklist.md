@@ -14,7 +14,7 @@ This document is the single checklist hub for:
 4. Mark a phase as `Completed` only after all exit criteria are verified.
 
 ## Global Status
-- Overall Program Status: `In Progress (Phase 1 Completed)`
+- Overall Program Status: `In Progress (Phase 1-2 Completed)`
 - Last Updated: `2026-03-05`
 - Owner: `Codex + User`
 
@@ -29,7 +29,7 @@ This document is the single checklist hub for:
 | Phase | Name | Status | Completion | Implementation Health | Blocking Issues |
 |---|---|---|---|---|---|
 | 1 | Foundation and Contract Freeze | Completed | 100% | Healthy | 0 |
-| 2 | Core Runtime and Dify Provider | Not Started | 0% | Unknown | 0 |
+| 2 | Core Runtime and Dify Provider | Completed | 100% | Healthy | 0 |
 | 3 | Tools, Skills, and Plugin Runtime | Not Started | 0% | Unknown | 0 |
 | 4 | SubAgent, Proactive, Capability Adapters | Not Started | 0% | Unknown | 0 |
 | 5 | WebUI Completion, Quality, and Release | Not Started | 0% | Unknown | 0 |
@@ -70,26 +70,47 @@ This document is the single checklist hub for:
 
 ## Phase 2 Checklist
 - Phase Document: [task-plan-phase-2-core-runtime-and-dify.md](/root/code/CWORK/docs/task-plans/task-plan-phase-2-core-runtime-and-dify.md)
-- Phase Status: `Not Started`
-- Completion: `0%`
-- Implementation Health: `Unknown`
+- Phase Status: `Completed`
+- Completion: `100%`
+- Implementation Health: `Healthy`
 
 ### Completion Checklist
-- [ ] All Phase 2 tasks completed.
-- [ ] All Phase 2 verification commands passed.
-- [ ] Phase 2 exit criteria validated.
+- [x] All Phase 2 tasks completed.
+- [x] All Phase 2 verification commands passed.
+- [x] Phase 2 exit criteria validated.
 
 ### Implementation Progress Notes
-- `TBD`
+- Implemented runtime backbone modules under `apps/core/src/pipeline/*` with deterministic stage order and stop-propagation support.
+- Added baseline stage set: `WakeCheckStage`, `PreprocessStage`, `ProcessStage`, `ResultDecorateStage`, `RespondStage`.
+- Added message-chain domain module (`apps/core/src/message/chain.ts`) for string/part normalization and serializer/deserializer.
+- Implemented runtime SSE writer abstraction with heartbeat/terminal guards (`apps/core/src/sse/writer.ts`).
+- Added Dify config service (`apps/core/src/dify/dify-config.service.ts`) with schema validation, masking, env-template key resolution.
+- Added Dify stream parser and client (`apps/core/src/dify/stream-parser.ts`, `apps/core/src/dify/api-client.ts`) with timeout+retry behavior.
+- Added Dify runner (`apps/core/src/dify/runner.ts`) for `chat|agent|chatflow|workflow` with conversation binding and workflow output mapping.
+- Added variable merge semantics helper (`apps/core/src/dify/variables.ts`) with deterministic precedence.
+- Reworked runtime chat endpoint to use `RuntimeChatService` and pipeline (`apps/core/src/runtime/runtime-chat.service.ts`).
+- Added request-id/session-aware runtime completion logs and kept secret redaction in error logs.
 
 ### Evidence (Commands / CI / PRs)
-- `TBD`
+- `pnpm -r lint` (passed)
+- `pnpm -r typecheck` (passed)
+- `pnpm -r test` (passed; core test files: 13, tests: 32)
+- `pnpm -r build` (passed)
+- Coverage highlights:
+  - pipeline stage order + stop propagation tests
+  - stage integration tests
+  - message-chain normalization tests
+  - SSE event order + heartbeat tests
+  - Dify config/client/parser/runner tests (including mode coverage and workflow mapping)
+  - session conversation binding concurrency test
+  - runtime route integration tests (`/runtime/chat`, `/runtime/sessions`, `/config/dify`)
 
 ### Issues and Blockers
-- None.
+- Type-system friction from `exactOptionalPropertyTypes` during Phase 2 implementation.
 
 ### Resolutions and Decisions
-- None.
+- Unified optional field typing in shared contracts and runtime session/config models to avoid undefined-assignment drift.
+- Added strict fallback handling for missing final pipeline result and workflow non-string outputs.
 
 ## Phase 3 Checklist
 - Phase Document: [task-plan-phase-3-tools-skills-plugin-runtime.md](/root/code/CWORK/docs/task-plans/task-plan-phase-3-tools-skills-plugin-runtime.md)

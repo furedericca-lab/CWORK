@@ -12,25 +12,31 @@ export interface ErrorEnvelope {
   error: {
     code: ErrorCode;
     message: string;
-    details?: Record<string, unknown>;
+    details?: Record<string, unknown> | undefined;
     requestId: string;
   };
 }
 
 export type MessagePart =
   | { type: 'plain'; text: string }
-  | { type: 'image'; path?: string; url?: string; attachmentId?: string }
-  | { type: 'file'; path?: string; url?: string; attachmentId?: string; filename?: string }
-  | { type: 'video'; path?: string; url?: string; attachmentId?: string }
+  | { type: 'image'; path?: string | undefined; url?: string | undefined; attachmentId?: string | undefined }
+  | {
+      type: 'file';
+      path?: string | undefined;
+      url?: string | undefined;
+      attachmentId?: string | undefined;
+      filename?: string | undefined;
+    }
+  | { type: 'video'; path?: string | undefined; url?: string | undefined; attachmentId?: string | undefined }
   | { type: 'reply'; messageId: string | number }
-  | { type: 'record'; path?: string; url?: string };
+  | { type: 'record'; path?: string | undefined; url?: string | undefined };
 
 export interface RuntimeChatRequest {
-  sessionId?: string;
+  sessionId?: string | undefined;
   message: string | MessagePart[];
-  enableStreaming?: boolean;
-  configId?: string;
-  metadata?: Record<string, unknown>;
+  enableStreaming?: boolean | undefined;
+  configId?: string | undefined;
+  metadata?: Record<string, unknown> | undefined;
 }
 
 export interface RuntimeChatErrorEvent {
@@ -46,8 +52,69 @@ export interface RuntimeChatFinalResultEvent {
     promptTokens: number;
     completionTokens: number;
     totalTokens: number;
-  };
+  } | undefined;
 }
+
+export interface RuntimeChatMetaEvent {
+  requestId: string;
+  sessionId: string;
+  timestamp: string;
+}
+
+export interface RuntimeChatDeltaEvent {
+  text: string;
+  index: number;
+}
+
+export interface RuntimeToolCallTraceEvent {
+  toolName: string;
+  callId: string;
+  arguments?: Record<string, unknown>;
+  ok?: boolean;
+  result?: Record<string, unknown>;
+}
+
+export interface RuntimeHandoffEvent {
+  from: string;
+  to: string;
+  reason: string;
+}
+
+export interface RuntimeCapabilityTraceEvent {
+  type: 'knowledge' | 'search' | 'mcp' | 'sandbox';
+  status: 'start' | 'finish' | 'error';
+  data?: Record<string, unknown>;
+}
+
+export type RuntimeSseEventName =
+  | 'meta'
+  | 'delta'
+  | 'tool_call_start'
+  | 'tool_call_end'
+  | 'handoff'
+  | 'capability'
+  | 'final_result'
+  | 'error'
+  | 'done';
+
+export type RuntimeSseEventPayloadMap = {
+  meta: RuntimeChatMetaEvent;
+  delta: RuntimeChatDeltaEvent;
+  tool_call_start: RuntimeToolCallTraceEvent;
+  tool_call_end: RuntimeToolCallTraceEvent;
+  handoff: RuntimeHandoffEvent;
+  capability: RuntimeCapabilityTraceEvent;
+  final_result: RuntimeChatFinalResultEvent;
+  error: RuntimeChatErrorEvent;
+  done: { ok: true };
+};
+
+export type RuntimeSseEvent = {
+  [K in RuntimeSseEventName]: {
+    event: K;
+    data: RuntimeSseEventPayloadMap[K];
+  };
+}[RuntimeSseEventName];
 
 export interface RuntimeSessionItem {
   sessionId: string;
@@ -74,13 +141,13 @@ export interface ReadyzResponse {
 
 export interface DifyConfig {
   providerId: string;
-  difyApiKey?: string;
+  difyApiKey?: string | undefined;
   difyApiBase: string;
   difyApiType: 'chat' | 'agent' | 'chatflow' | 'workflow';
   difyWorkflowOutputKey: string;
   difyQueryInputKey: string;
   timeoutSec: number;
-  variables?: Record<string, unknown>;
+  variables?: Record<string, unknown> | undefined;
 }
 
 export interface DifyConfigMaskedView extends Omit<DifyConfig, 'difyApiKey'> {
@@ -111,13 +178,13 @@ export interface PluginImportLocalRequest {
 
 export interface PluginImportGitRequest {
   repoUrl: string;
-  ref?: string;
+  ref?: string | undefined;
 }
 
 export interface SkillDescriptor {
   skillId: string;
   name: string;
-  description?: string;
+  description?: string | undefined;
   enabled: boolean;
 }
 
@@ -125,6 +192,6 @@ export interface SubagentDescriptor {
   subagentId: string;
   name: string;
   enabled: boolean;
-  systemPrompt?: string;
+  systemPrompt?: string | undefined;
   tools: string[];
 }

@@ -3,6 +3,7 @@ import type { CoreRepositories, ProactiveJobRecord, SessionRecord } from './inte
 
 const defaultDifyConfig: DifyConfig = {
   providerId: 'dify_app_default',
+  difyApiKey: 'dev-dify-key',
   difyApiBase: 'https://api.dify.ai/v1',
   difyApiType: 'chat',
   difyWorkflowOutputKey: 'astrbot_wf_output',

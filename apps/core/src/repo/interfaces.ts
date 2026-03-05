@@ -1,9 +1,9 @@
 import type { DifyConfig, PluginItem, RuntimeSessionItem, SkillDescriptor, SubagentDescriptor } from '@cwork/shared';
 
 export interface SessionRecord extends RuntimeSessionItem {
-  difyConversationId?: string;
+  difyConversationId?: string | undefined;
   sessionVariables: Record<string, unknown>;
-  activeConfigId?: string;
+  activeConfigId?: string | undefined;
   lastActivityAt: string;
 }
 
