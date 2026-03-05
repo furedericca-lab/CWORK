@@ -14,7 +14,7 @@ This document is the single checklist hub for:
 4. Mark a phase as `Completed` only after all exit criteria are verified.
 
 ## Global Status
-- Overall Program Status: `In Progress (Phase 1-4 Completed, Phase 5 In Progress)`
+- Overall Program Status: `Completed (Phase 1-5 Completed)`
 - Last Updated: `2026-03-05`
 - Owner: `Codex + User`
 
@@ -32,7 +32,7 @@ This document is the single checklist hub for:
 | 2 | Core Runtime and Dify Provider | Completed | 100% | Healthy | 0 |
 | 3 | Tools, Skills, and Plugin Runtime | Completed | 100% | Healthy | 0 |
 | 4 | SubAgent, Proactive, Capability Adapters | Completed | 100% | Healthy | 0 |
-| 5 | WebUI Completion, Quality, and Release | In Progress | 35% | Healthy | 0 |
+| 5 | WebUI Completion, Quality, and Release | Completed | 100% | Healthy | 0 |
 
 ## Phase 1 Checklist
 - Phase Document: [task-plan-phase-1-foundation-and-contracts.md](/root/code/CWORK/docs/task-plans/task-plan-phase-1-foundation-and-contracts.md)
@@ -198,14 +198,14 @@ This document is the single checklist hub for:
 
 ## Phase 5 Checklist
 - Phase Document: [task-plan-phase-5-webui-quality-and-release.md](/root/code/CWORK/docs/task-plans/task-plan-phase-5-webui-quality-and-release.md)
-- Phase Status: `In Progress`
-- Completion: `35%`
+- Phase Status: `Completed`
+- Completion: `100%`
 - Implementation Health: `Healthy`
 
 ### Completion Checklist
-- [ ] All Phase 5 tasks completed.
+- [x] All Phase 5 tasks completed.
 - [x] Current implemented scope verification commands passed.
-- [ ] Phase 5 exit criteria validated.
+- [x] Phase 5 exit criteria validated.
 
 ### Implementation Progress Notes
 - Completed WebUI v1 operations console foundation:
@@ -229,6 +229,24 @@ This document is the single checklist hub for:
   - subagent JSON editor + available tool list
   - proactive jobs create/delete/list UI
   - capability health overview panel
+- Completed test matrix and release hardening:
+  - Added package-level `e2e` scripts for shared/core/web and root `pnpm e2e`.
+  - Added E2E smoke tests for core runtime flow and web console boot.
+  - Added CI segmented jobs (`lint`, `typecheck`, `test`, `build`, `e2e`, `security`).
+  - Added security checks:
+    - `pnpm audit --audit-level high`
+    - core security tests for auth coverage and redaction behavior
+  - Added performance and reliability smoke scripts:
+    - `pnpm perf:smoke`
+    - `pnpm reliability:smoke`
+  - Added release/deployment documentation set:
+    - `.env.example`
+    - `DEVELOPMENT.md`
+    - `OPERATIONS.md`
+    - `SECURITY.md`
+    - `TROUBLESHOOTING.md`
+    - `RELEASE-CHECKLIST.md`
+  - Added root release gate command: `pnpm release:check`
 
 ### Evidence (Commands / CI / PRs)
 - `pnpm --filter @cwork/web lint` (passed)
@@ -237,8 +255,12 @@ This document is the single checklist hub for:
 - `pnpm --filter @cwork/web build` (passed)
 - `pnpm -r lint` (passed)
 - `pnpm -r typecheck` (passed)
-- `pnpm -r test` (passed; web: 2 files/3 tests, core: 28 files/60 tests)
+- `pnpm -r test` (passed; web: 2 files/4 tests, core: 31 files/63 tests)
 - `pnpm -r build` (passed)
+- `pnpm -r e2e` (passed; core/web smoke e2e covered)
+- `pnpm perf:smoke` (passed with p50/p95 report output)
+- `pnpm reliability:smoke` (passed; plugin failure isolation verified)
+- `pnpm security:check` (passed)
 
 ### Issues and Blockers
 - No blocking issue currently.
@@ -246,11 +268,12 @@ This document is the single checklist hub for:
 ### Resolutions and Decisions
 - Chose single-shell multi-page WebUI (no extra router dependency) to accelerate full operational coverage in Phase 5.
 - Chose centralized typed client + per-request trace emission to satisfy diagnostics and request correlation requirements early.
+- Chose pragmatic smoke-based E2E/performance/reliability gates to keep CI deterministic while still validating end-to-end paths.
 
 ## Final Release Gate
-- [ ] All 5 phases marked `Completed`.
-- [ ] Full quality gate passed (`lint/test/build/e2e`).
-- [ ] Security checks completed.
+- [x] All 5 phases marked `Completed`.
+- [x] Full quality gate passed (`lint/test/build/e2e`).
+- [x] Security checks completed.
 - [ ] Release checklist signed off.
 
 ---

@@ -5,10 +5,17 @@
   "packageManager": "pnpm@10.30.3",
   "scripts": {
     "dev": "pnpm -r --parallel dev",
+    "start:core": "pnpm --filter @cwork/core start",
+    "preview:web": "pnpm --filter @cwork/web preview",
     "build": "pnpm -r build",
     "test": "pnpm -r test",
+    "e2e": "pnpm -r e2e",
     "lint": "pnpm -r lint",
     "typecheck": "pnpm -r typecheck",
+    "perf:smoke": "pnpm --filter @cwork/core perf:smoke",
+    "reliability:smoke": "pnpm --filter @cwork/core reliability:smoke",
+    "security:check": "pnpm audit --audit-level high && pnpm --filter @cwork/core test:security",
+    "release:check": "pnpm -r lint && pnpm -r typecheck && pnpm -r test && pnpm -r build && pnpm -r e2e && pnpm audit --audit-level high",
     "format:check": "prettier --check ."
   },
   "devDependencies": {

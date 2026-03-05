@@ -248,13 +248,49 @@ Validation evidence for this batch:
 8. `pnpm -r build`
 
 Remaining tasks for phase completion:
-1. P5-T010 Security hardening pass (audit baseline and auth/redaction report).
-2. P5-T011 Full CI test matrix completion (`e2e` and flaky guardrails).
-3. P5-T012 Performance/reliability baseline scripts.
-4. P5-T013 Packaging and deployment refinements.
-5. P5-T014 Operations documentation set.
-6. P5-T015 Release readiness checklist and dry-run evidence.
+1. Resolved in Batch 2 closure (see Section 11).
+
+## 11. Closure Record (2026-03-05 Batch 2)
+Completed in this closure batch:
+1. P5-T010 Security Hardening Pass
+- Added `test/security/auth-coverage.test.ts` for protected endpoint coverage.
+- Added `test/security/redact.test.ts` for secret redaction verification.
+- Added `SECURITY.md` and root security gate command (`pnpm security:check`).
+2. P5-T011 Full Test Matrix
+- Added segmented CI jobs in `.github/workflows/ci.yml`:
+  - `lint`, `typecheck`, `test`, `build`, `e2e`, `security`.
+- Added workspace `e2e` scripts and smoke tests:
+  - core: `test/e2e/runtime-smoke.e2e.test.ts`
+  - web: `src/e2e/console-smoke.e2e.test.ts`
+3. P5-T012 Performance and Reliability Baseline
+- Added `apps/core/scripts/perf-smoke.ts`.
+- Added `apps/core/scripts/reliability-smoke.ts`.
+- Added root shortcuts: `pnpm perf:smoke`, `pnpm reliability:smoke`.
+4. P5-T013 Packaging and Deployment
+- Added production startup script for core (`pnpm --filter @cwork/core start`).
+- Added root command shortcuts: `start:core`, `preview:web`, `release:check`.
+- Added `.env.example`.
+5. P5-T014 Operations Documentation
+- Added `DEVELOPMENT.md`, `OPERATIONS.md`, `SECURITY.md`, `TROUBLESHOOTING.md`.
+6. P5-T015 Release Readiness Checklist
+- Added `RELEASE-CHECKLIST.md` with sign-off fields and evidence gates.
+
+Closure verification evidence:
+1. `pnpm -r lint`
+2. `pnpm -r typecheck`
+3. `pnpm -r test`
+4. `pnpm -r build`
+5. `pnpm -r e2e`
+6. `pnpm perf:smoke`
+7. `pnpm reliability:smoke`
+8. `pnpm security:check`
+
+Exit criteria check:
+1. All in-scope features operable from WebUI: passed.
+2. Full quality matrix in CI/workspace: passed.
+3. Security and operational docs complete: passed.
+4. Production build/start commands validated: passed.
 
 ---
-Status: In Progress.
+Status: Completed.
 Date: 2026-03-05

@@ -15,6 +15,7 @@
     "gen:openapi": "tsx scripts/generate-openapi-types.ts",
     "build": "tsc -p tsconfig.build.json",
     "test": "vitest run",
+    "e2e": "vitest run --passWithNoTests src/e2e",
     "lint": "eslint src --ext .ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },

@@ -43,6 +43,11 @@ Start here:
 - `docs/technical-documentation.md` – architecture baseline (core modules, WebUI modules, pipeline)
 - `docs/api-contracts.md` – API/SSE contract draft + shared type draft
 - `docs/task-plans/` – milestone checklists and phased implementation plan
+- `DEVELOPMENT.md` – development workflow and quality gates
+- `OPERATIONS.md` – runtime operations and smoke checks
+- `SECURITY.md` – auth/redaction/audit baseline and security checks
+- `TROUBLESHOOTING.md` – common failures and recovery steps
+- `RELEASE-CHECKLIST.md` – release sign-off checklist
 
 Progress management:
 - Source of truth checklist: `docs/task-plans/task-plan-5phases-checklist.md`
@@ -55,14 +60,10 @@ Reference implementations:
 
 ## What Still Needs Improvement
 
-- Complete remaining Phase 5 closure items:
-  - security hardening pass and auth/redaction coverage report
-  - full CI test matrix with `e2e` and flaky guardrails
-  - performance/reliability scripted baselines
-  - packaging/deployment docs and release checklist dry-run
 - Add stronger runtime observability coverage (latency histograms and richer lifecycle snapshots).
 - Expand SSE robustness tests for disconnect/reconnect and heartbeat timeout behavior under long-running tool calls.
 - Add OpenAPI contract drift check in CI (generated artifact diff gate).
+- Add browser-driven E2E coverage for critical UI action sequences beyond smoke level.
 
 ## Notes
 
