@@ -13,7 +13,7 @@ import type {
 } from '@cwork/shared';
 import type { CoreRepositories, ProactiveJobRecord, SessionRecord } from './interfaces';
 
-const defaultDifyConfig: DifyConfig = {
+export const defaultDifyConfig: DifyConfig = {
   providerId: 'dify_app_default',
   difyApiKey: 'dev-dify-key',
   difyApiBase: 'https://api.dify.ai/v1',
@@ -24,14 +24,14 @@ const defaultDifyConfig: DifyConfig = {
   variables: {}
 };
 
-const defaultSubagentConfig: SubagentConfig = {
+export const defaultSubagentConfig: SubagentConfig = {
   mainEnable: true,
   removeMainDuplicateTools: false,
   routerSystemPrompt: 'Route to a specialized subagent when needed.',
   agents: []
 };
 
-const defaultCapabilities: CapabilityStatusResponse = {
+export const defaultCapabilities: CapabilityStatusResponse = {
   dify: { enabled: true, healthy: true },
   plugins: { enabled: true, healthy: true },
   skills: { enabled: true, healthy: true },

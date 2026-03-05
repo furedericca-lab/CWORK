@@ -1,22 +1,13 @@
 import type { ProactiveJob } from '@cwork/shared';
 import { ProactiveManager } from './manager';
+import { cronMatches, cronTickMs, parseCronExpression, type ParsedCronExpression } from './cron';
 
-const DEFAULT_INTERVAL_SEC = 60;
 const MAX_TIMEOUT_MS = 2_147_483_647;
 
-const parseCronToMs = (expression: string): number => {
-  const secMatch = expression.match(/^\*\/(\d+)\s+\*\s+\*\s+\*\s+\*\s+\*$/);
-  if (secMatch) {
-    return Math.max(1, Number(secMatch[1])) * 1000;
-  }
-
-  const minMatch = expression.match(/^\*\/(\d+)\s+\*\s+\*\s+\*\s+\*$/);
-  if (minMatch) {
-    return Math.max(1, Number(minMatch[1])) * 60 * 1000;
-  }
-
-  return DEFAULT_INTERVAL_SEC * 1000;
-};
+interface ScheduledRecurring {
+  cron: ParsedCronExpression;
+  timezone: string;
+}
 
 export interface ProactiveSchedulerOptions {
   onRun: (job: ProactiveJob) => Promise<void>;
@@ -38,6 +29,7 @@ export class ProactiveScheduler {
   private readonly setIntervalFn: (callback: () => void, ms: number) => NodeJS.Timeout;
   private readonly clearIntervalFn: (timer: NodeJS.Timeout) => void;
   private readonly timers = new Map<string, NodeJS.Timeout>();
+  private readonly recurring = new Map<string, ScheduledRecurring>();
   private readonly runningJobs = new Set<string>();
   private started = false;
 
@@ -72,6 +64,7 @@ export class ProactiveScheduler {
       this.clearIntervalFn(timer);
     }
     this.timers.clear();
+    this.recurring.clear();
     this.started = false;
   }
 
@@ -99,8 +92,18 @@ export class ProactiveScheduler {
       return;
     }
 
-    const intervalMs = parseCronToMs(job.cronExpression ?? '');
+    const cronExpression = parseCronExpression(job.cronExpression ?? '');
+    const timezone = job.timezone ?? 'UTC';
+    const intervalMs = cronTickMs(cronExpression);
+    this.recurring.set(job.jobId, { cron: cronExpression, timezone });
     const timer = this.setIntervalFn(() => {
+      const recurring = this.recurring.get(job.jobId);
+      if (!recurring) {
+        return;
+      }
+      if (!cronMatches(recurring.cron, this.nowFn(), recurring.timezone)) {
+        return;
+      }
       void this.executeJob(job.jobId, false);
     }, intervalMs);
     this.timers.set(job.jobId, timer);
@@ -114,6 +117,7 @@ export class ProactiveScheduler {
     this.clearTimeoutFn(timer);
     this.clearIntervalFn(timer);
     this.timers.delete(jobId);
+    this.recurring.delete(jobId);
   }
 
   private async executeJob(jobId: string, runOnce: boolean): Promise<void> {

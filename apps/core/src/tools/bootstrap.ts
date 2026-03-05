@@ -56,6 +56,91 @@ export const createBuiltinTools = (deps: {
     },
     {
       meta: {
+        toolName: 'mcp.add_server',
+        description: 'Add a new MCP server',
+        enabled: true,
+        source: 'mcp',
+        schema: {
+          name: { type: 'string', required: true },
+          enabled: { type: 'boolean', required: true },
+          transport: { type: 'string', required: true },
+          command: { type: 'string', required: false },
+          args: { type: 'array', required: false },
+          url: { type: 'string', required: false },
+          timeoutSec: { type: 'number', required: false }
+        }
+      },
+      async handler(args) {
+        return deps.mcpManager.addServer(args);
+      }
+    },
+    {
+      meta: {
+        toolName: 'mcp.update_server',
+        description: 'Update an existing MCP server',
+        enabled: true,
+        source: 'mcp',
+        schema: {
+          name: { type: 'string', required: true },
+          enabled: { type: 'boolean', required: true },
+          transport: { type: 'string', required: true },
+          command: { type: 'string', required: false },
+          args: { type: 'array', required: false },
+          url: { type: 'string', required: false },
+          timeoutSec: { type: 'number', required: false }
+        }
+      },
+      async handler(args) {
+        return deps.mcpManager.updateServer(args);
+      }
+    },
+    {
+      meta: {
+        toolName: 'mcp.enable_server',
+        description: 'Enable MCP server',
+        enabled: true,
+        source: 'mcp',
+        schema: {
+          name: { type: 'string', required: true }
+        }
+      },
+      async handler(args) {
+        await deps.mcpManager.enableServer(String(args.name ?? ''));
+        return { ok: true };
+      }
+    },
+    {
+      meta: {
+        toolName: 'mcp.disable_server',
+        description: 'Disable MCP server',
+        enabled: true,
+        source: 'mcp',
+        schema: {
+          name: { type: 'string', required: true }
+        }
+      },
+      async handler(args) {
+        await deps.mcpManager.disableServer(String(args.name ?? ''));
+        return { ok: true };
+      }
+    },
+    {
+      meta: {
+        toolName: 'mcp.delete_server',
+        description: 'Delete MCP server',
+        enabled: true,
+        source: 'mcp',
+        schema: {
+          name: { type: 'string', required: true }
+        }
+      },
+      async handler(args) {
+        await deps.mcpManager.deleteServer(String(args.name ?? ''));
+        return { ok: true };
+      }
+    },
+    {
+      meta: {
         toolName: 'web.search',
         description: 'Search web results with configured search provider',
         enabled: true,

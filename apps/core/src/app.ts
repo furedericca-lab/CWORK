@@ -36,6 +36,7 @@ import { ProactiveManager } from './proactive/manager';
 import { createNoopSseWriter } from './proactive/noop-writer';
 import { ProactiveScheduler } from './proactive/scheduler';
 import { createInMemoryRepositories } from './repo/memory';
+import { createFileRepositories } from './repo/file';
 import type { CoreRepositories } from './repo/interfaces';
 import { PluginManager } from './plugins/manager';
 import { RuntimeChatService } from './runtime/runtime-chat.service';
@@ -103,6 +104,41 @@ const resolveRuntimeMode = (value: string | undefined): RuntimeMode => {
   return 'none';
 };
 
+const parsePositiveInt = (value: string | undefined): number | undefined => {
+  if (!value) {
+    return undefined;
+  }
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    return undefined;
+  }
+  return parsed;
+};
+
+const resolveAuthToken = (explicit?: string): string => {
+  if (explicit && explicit.trim()) {
+    return explicit;
+  }
+
+  const envToken = process.env.API_AUTH_TOKEN?.trim();
+  if (envToken) {
+    return envToken;
+  }
+
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('API_AUTH_TOKEN is required in production');
+  }
+
+  return DEFAULT_AUTH_TOKEN;
+};
+
+const useInMemoryRepositories = (): boolean => {
+  if (process.env.CWORK_REPO_MODE === 'memory') {
+    return true;
+  }
+  return process.env.NODE_ENV === 'test';
+};
+
 export interface BuildAppOptions {
   authToken?: string;
   repositories?: CoreRepositories;
@@ -110,8 +146,11 @@ export interface BuildAppOptions {
 }
 
 export async function buildApp(options: BuildAppOptions = {}) {
-  const authToken = options.authToken ?? process.env.API_AUTH_TOKEN ?? DEFAULT_AUTH_TOKEN;
-  const repositories = options.repositories ?? createInMemoryRepositories();
+  const authToken = resolveAuthToken(options.authToken);
+  const fileRepoOptions = process.env.CWORK_STATE_FILE ? { filePath: process.env.CWORK_STATE_FILE } : undefined;
+  const repositories =
+    options.repositories ??
+    (useInMemoryRepositories() ? createInMemoryRepositories() : await createFileRepositories(fileRepoOptions));
   const difyConfigService = new DifyConfigService(repositories.difyConfig);
   const runtimeChatService = new RuntimeChatService(repositories, options.difyApiClient);
 
@@ -128,6 +167,12 @@ export async function buildApp(options: BuildAppOptions = {}) {
   const knowledgeManager = new KnowledgeManager(repositories.knowledge);
   const sandboxAdapter = new SandboxAdapter({
     mode: resolveRuntimeMode(process.env.CWORK_RUNTIME_MODE),
+    ...(parsePositiveInt(process.env.CWORK_SANDBOX_CPU_SECONDS)
+      ? { cpuSeconds: parsePositiveInt(process.env.CWORK_SANDBOX_CPU_SECONDS)! }
+      : {}),
+    ...(parsePositiveInt(process.env.CWORK_SANDBOX_MEMORY_KB)
+      ? { memoryKb: parsePositiveInt(process.env.CWORK_SANDBOX_MEMORY_KB)! }
+      : {}),
     onAudit: (payload) => {
       auditLogger.log({
         action: payload.action,
@@ -232,7 +277,18 @@ export async function buildApp(options: BuildAppOptions = {}) {
 
   app.get('/api/v1/healthz', async (): Promise<HealthzResponse> => ({ ok: true }));
 
-  app.get('/api/v1/readyz', async (): Promise<ReadyzResponse> => ({ ok: true, provider: 'dify' }));
+  app.get('/api/v1/readyz', async (): Promise<ReadyzResponse> => {
+    const checks = await Promise.allSettled([
+      difyConfigService.getConfig(),
+      difyConfigService.getResolvedApiKey(),
+      repositories.sessions.list(1, 1),
+      repositories.plugins.list(),
+      repositories.skills.list(),
+      repositories.mcp.list()
+    ]);
+    const ok = checks.every((item) => item.status === 'fulfilled');
+    return { ok, provider: 'dify' };
+  });
 
   app.get('/api/v1/runtime/sessions', { preHandler: requireAuth }, async (request): Promise<RuntimeSessionsResponse> => {
     const parsedQuery = listSessionsQuerySchema.parse(request.query);
@@ -256,7 +312,25 @@ export async function buildApp(options: BuildAppOptions = {}) {
   });
 
   app.put('/api/v1/config/dify', { preHandler: requireAuth }, async (request): Promise<DifyConfigMaskedView> => {
-    return difyConfigService.updateConfig(request.body);
+    try {
+      const updated = await difyConfigService.updateConfig(request.body);
+      auditLogger.log({
+        action: 'config.dify.update',
+        requestId: request.id,
+        actor: 'api',
+        result: 'success'
+      });
+      return updated;
+    } catch (error) {
+      auditLogger.log({
+        action: 'config.dify.update',
+        requestId: request.id,
+        actor: 'api',
+        result: 'failure',
+        details: { reason: error instanceof Error ? error.message : String(error) }
+      });
+      throw error;
+    }
   });
 
   app.post('/api/v1/runtime/chat', { preHandler: requireAuth }, async (request, reply) => {

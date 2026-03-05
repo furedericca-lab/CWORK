@@ -23,6 +23,25 @@ const computeScore = (query: string, content: string): number => {
   return hits / tokens.length;
 };
 
+const chunkText = (content: string, size = 420, overlap = 80): string[] => {
+  const normalized = content.trim();
+  if (!normalized) {
+    return [];
+  }
+
+  const chunks: string[] = [];
+  let cursor = 0;
+  while (cursor < normalized.length) {
+    const end = Math.min(normalized.length, cursor + size);
+    chunks.push(normalized.slice(cursor, end));
+    if (end >= normalized.length) {
+      break;
+    }
+    cursor = Math.max(0, end - overlap);
+  }
+  return chunks;
+};
+
 export class KnowledgeManager {
   constructor(private readonly repository: KnowledgeRepository) {}
 
@@ -99,20 +118,24 @@ export class KnowledgeManager {
   async retrieveByQuery(input: KnowledgeRetrieveRequestInput): Promise<{ items: KnowledgeRetrieveItem[] }> {
     const docs = await this.repository.listDocuments();
     const scored = docs
-      .map((doc) => ({
-        doc,
-        score: computeScore(input.query, `${doc.title}\n${doc.content}`)
-      }))
+      .flatMap((doc) =>
+        chunkText(doc.content).map((chunk, chunkIndex) => ({
+          doc,
+          chunk,
+          chunkIndex,
+          score: computeScore(input.query, `${doc.title}\n${chunk}`)
+        }))
+      )
       .filter((item) => item.score > 0)
       .sort((a, b) => b.score - a.score)
       .slice(0, input.topK);
 
-    const items: KnowledgeRetrieveItem[] = scored.map(({ doc, score }) => ({
+    const items: KnowledgeRetrieveItem[] = scored.map(({ doc, chunk, chunkIndex, score }) => ({
       docId: doc.docId,
       title: doc.title,
-      snippet: doc.content.slice(0, 220),
+      snippet: chunk.slice(0, 220),
       score,
-      citation: doc.source ?? `kb:${doc.docId}`
+      citation: doc.source ?? `kb:${doc.docId}#chunk-${chunkIndex + 1}`
     }));
 
     return { items };

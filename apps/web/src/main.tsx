@@ -3,7 +3,6 @@ import { createRoot } from 'react-dom/client';
 import { QueryClient, QueryClientProvider, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { CapabilityStatusResponse, DifyConfig, ProactiveJobCreateRequest, RuntimeSseEventPayloadMap, SubagentConfig } from '@cwork/shared';
 import { ApiError, createApiClient, type RequestTraceEntry, type RuntimeSseEventEnvelope } from './api/client';
-import './i18n';
 import './styles.css';
 
 const queryClient = new QueryClient();
@@ -12,14 +11,14 @@ const API_TOKEN_KEY = 'cwork.web.apiToken';
 type PageKey = 'overview' | 'runtime' | 'dify' | 'plugins' | 'skills-tools' | 'mcp' | 'subagents' | 'proactive';
 
 const pageItems: Array<{ key: PageKey; label: string }> = [
-  { key: 'overview', label: 'Overview' },
-  { key: 'runtime', label: 'Runtime Console' },
-  { key: 'dify', label: 'Dify Settings' },
-  { key: 'plugins', label: 'Plugins' },
-  { key: 'skills-tools', label: 'Skills / Tools / Knowledge' },
+  { key: 'overview', label: '概览' },
+  { key: 'runtime', label: '运行控制台' },
+  { key: 'dify', label: 'Dify 设置' },
+  { key: 'plugins', label: '插件' },
+  { key: 'skills-tools', label: '技能 / 工具 / 知识库' },
   { key: 'mcp', label: 'MCP' },
-  { key: 'subagents', label: 'SubAgents' },
-  { key: 'proactive', label: 'Proactive Jobs' }
+  { key: 'subagents', label: '子代理' },
+  { key: 'proactive', label: '主动任务' }
 ];
 
 const formatError = (error: unknown): string => {
@@ -36,9 +35,9 @@ const stringifyJson = (value: unknown): string => JSON.stringify(value, null, 2)
 
 const getStoredApiToken = (): string => {
   if (typeof localStorage === 'undefined') {
-    return 'dev-token';
+    return import.meta.env.DEV ? 'dev-token' : '';
   }
-  return localStorage.getItem(API_TOKEN_KEY) ?? 'dev-token';
+  return localStorage.getItem(API_TOKEN_KEY) ?? (import.meta.env.DEV ? 'dev-token' : '');
 };
 
 const StatusChip = ({ ok, text }: { ok: boolean; text: string }) => {
@@ -46,6 +45,20 @@ const StatusChip = ({ ok, text }: { ok: boolean; text: string }) => {
 };
 
 const isMetaEvent = (event: RuntimeSseEventEnvelope): event is RuntimeSseEventEnvelope<'meta'> => event.event === 'meta';
+const getStreamStatusLabel = (status: 'idle' | 'running' | 'failed' | 'done'): string => {
+  switch (status) {
+    case 'idle':
+      return '空闲';
+    case 'running':
+      return '进行中';
+    case 'failed':
+      return '失败';
+    case 'done':
+      return '完成';
+    default:
+      return status;
+  }
+};
 
 interface PanelProps {
   title: string;
@@ -97,38 +110,38 @@ const OverviewPage = ({ api }: AppContext) => {
 
   return (
     <div className="page-grid">
-      <Panel title="Service Health" subtitle="Liveness, readiness, and capability heartbeat">
+      <Panel title="服务健康" subtitle="存活、就绪与能力心跳">
         <div className="kv-list">
           <div>
-            <span>Health</span>
-            <StatusChip ok={healthQuery.data?.ok === true} text={healthQuery.data?.ok ? 'Healthy' : 'Unknown'} />
+            <span>存活</span>
+            <StatusChip ok={healthQuery.data?.ok === true} text={healthQuery.data?.ok ? '健康' : '未知'} />
           </div>
           <div>
-            <span>Readiness</span>
-            <StatusChip ok={readyQuery.data?.ok === true} text={readyQuery.data?.ok ? 'Ready' : 'Not Ready'} />
+            <span>就绪</span>
+            <StatusChip ok={readyQuery.data?.ok === true} text={readyQuery.data?.ok ? '就绪' : '未就绪'} />
           </div>
           <div>
-            <span>Provider</span>
-            <strong>{readyQuery.data?.provider ?? 'n/a'}</strong>
+            <span>提供方</span>
+            <strong>{readyQuery.data?.provider ?? '无'}</strong>
           </div>
         </div>
       </Panel>
 
-      <Panel title="Capability Status" subtitle="Backend-reported runtime capability states">
-        {capabilitiesQuery.isLoading ? <p>Loading capability status...</p> : null}
+      <Panel title="能力状态" subtitle="后端上报的运行能力状态">
+        {capabilitiesQuery.isLoading ? <p>正在加载能力状态...</p> : null}
         {capabilitiesQuery.isError ? <p className="error-text">{formatError(capabilitiesQuery.error)}</p> : null}
         <div className="capability-grid">
           {capabilityEntries.map(([name, state]) => (
             <article className="capability-card" key={name}>
               <h3>{name}</h3>
               <p>
-                Enabled: <strong>{String(state.enabled)}</strong>
+                已启用: <strong>{String(state.enabled)}</strong>
               </p>
               <p>
-                Healthy: <strong>{String(state.healthy)}</strong>
+                健康: <strong>{String(state.healthy)}</strong>
               </p>
-              <p>Last Check: {state.lastCheckAt ?? 'n/a'}</p>
-              <p>Last Error: {state.lastError ?? 'none'}</p>
+              <p>上次检查: {state.lastCheckAt ?? '无'}</p>
+              <p>最近错误: {state.lastError ?? '无'}</p>
             </article>
           ))}
         </div>
@@ -144,7 +157,7 @@ const RuntimeConsolePage = ({ api }: AppContext) => {
   });
   const queryClientInternal = useQueryClient();
   const [sessionId, setSessionId] = useState('');
-  const [message, setMessage] = useState('Hello from CWORK WebUI');
+  const [message, setMessage] = useState('来自 CWORK WebUI 的问候');
   const [events, setEvents] = useState<RuntimeSseEventEnvelope[]>([]);
   const [streamStatus, setStreamStatus] = useState<'idle' | 'running' | 'failed' | 'done'>('idle');
   const [streamError, setStreamError] = useState<string | null>(null);
@@ -188,27 +201,27 @@ const RuntimeConsolePage = ({ api }: AppContext) => {
 
   return (
     <div className="page-grid">
-      <Panel title="Runtime Console" subtitle="SSE stream, timeline, and final message chain">
+      <Panel title="运行控制台" subtitle="SSE 流、事件时间线与最终消息链">
         <div className="form-grid">
           <label>
-            Session ID (optional)
+            会话 ID（可选）
             <input value={sessionId} onChange={(event) => setSessionId(event.target.value)} placeholder="sess_001" />
           </label>
           <label className="full-span">
-            Message
+            消息
             <textarea value={message} onChange={(event) => setMessage(event.target.value)} rows={4} />
           </label>
         </div>
         <div className="row">
           <button type="button" onClick={() => void runChat()} disabled={streamStatus === 'running' || message.trim().length === 0}>
-            {streamStatus === 'running' ? 'Streaming...' : 'Run Chat'}
+            {streamStatus === 'running' ? '流式处理中...' : '发送对话'}
           </button>
-          <StatusChip ok={streamStatus !== 'failed'} text={streamStatus} />
+          <StatusChip ok={streamStatus !== 'failed'} text={getStreamStatusLabel(streamStatus)} />
         </div>
         {streamError ? <p className="error-text">{streamError}</p> : null}
         {finalText ? (
           <div className="output-box">
-            <h3>Final Output</h3>
+            <h3>最终输出</h3>
             <pre>{finalText}</pre>
           </div>
         ) : null}
@@ -224,8 +237,8 @@ const RuntimeConsolePage = ({ api }: AppContext) => {
         </div>
       </Panel>
 
-      <Panel title="Session Selector" subtitle="Recent sessions from runtime store">
-        {sessionsQuery.isLoading ? <p>Loading sessions...</p> : null}
+      <Panel title="会话选择" subtitle="来自运行时存储的近期会话">
+        {sessionsQuery.isLoading ? <p>正在加载会话...</p> : null}
         {sessionsQuery.isError ? <p className="error-text">{formatError(sessionsQuery.error)}</p> : null}
         <ul className="simple-list">
           {(sessionsQuery.data?.items ?? []).map((session) => (
@@ -285,7 +298,7 @@ const DifySettingsPage = ({ api }: AppContext) => {
       try {
         parsedVariables = JSON.parse(variablesRaw) as Record<string, unknown>;
       } catch (error) {
-        throw new Error(`Invalid variables JSON: ${error instanceof Error ? error.message : String(error)}`);
+        throw new Error(`变量 JSON 格式错误：${error instanceof Error ? error.message : String(error)}`);
       }
 
       const payload: DifyConfig = {
@@ -295,7 +308,7 @@ const DifySettingsPage = ({ api }: AppContext) => {
       return api.updateDifyConfig(payload);
     },
     onSuccess: async () => {
-      setFeedback('Dify configuration updated.');
+      setFeedback('Dify 配置已更新。');
       setErrorText(null);
       await queryClientInternal.invalidateQueries({ queryKey: ['dify-config'] });
     },
@@ -306,22 +319,22 @@ const DifySettingsPage = ({ api }: AppContext) => {
   });
 
   return (
-    <Panel title="Dify Settings" subtitle="Dify-only provider configuration">
+    <Panel title="Dify 设置" subtitle="仅 Dify 提供方配置">
       <div className="form-grid">
         <label>
-          Provider ID
+          提供方 ID
           <input value={form.providerId} onChange={(event) => setForm((prev) => ({ ...prev, providerId: event.target.value }))} />
         </label>
         <label>
-          API Key
+          API 密钥
           <input value={form.difyApiKey ?? ''} onChange={(event) => setForm((prev) => ({ ...prev, difyApiKey: event.target.value }))} />
         </label>
         <label>
-          API Base
+          API 地址
           <input value={form.difyApiBase} onChange={(event) => setForm((prev) => ({ ...prev, difyApiBase: event.target.value }))} />
         </label>
         <label>
-          API Type
+          API 类型
           <select
             value={form.difyApiType}
             onChange={(event) =>
@@ -335,21 +348,21 @@ const DifySettingsPage = ({ api }: AppContext) => {
           </select>
         </label>
         <label>
-          Workflow Output Key
+          Workflow 输出键
           <input
             value={form.difyWorkflowOutputKey}
             onChange={(event) => setForm((prev) => ({ ...prev, difyWorkflowOutputKey: event.target.value }))}
           />
         </label>
         <label>
-          Query Input Key
+          Query 输入键
           <input
             value={form.difyQueryInputKey}
             onChange={(event) => setForm((prev) => ({ ...prev, difyQueryInputKey: event.target.value }))}
           />
         </label>
         <label>
-          Timeout Seconds
+          超时秒数
           <input
             type="number"
             min={1}
@@ -358,18 +371,18 @@ const DifySettingsPage = ({ api }: AppContext) => {
           />
         </label>
         <label className="full-span">
-          Variables JSON
+          变量 JSON
           <textarea value={variablesRaw} onChange={(event) => setVariablesRaw(event.target.value)} rows={6} />
         </label>
       </div>
       <div className="row">
         <button type="button" onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
-          {saveMutation.isPending ? 'Saving...' : 'Save Dify Config'}
+          {saveMutation.isPending ? '保存中...' : '保存 Dify 配置'}
         </button>
       </div>
       {feedback ? <p className="success-text">{feedback}</p> : null}
       {errorText ? <p className="error-text">{errorText}</p> : null}
-      {difyQuery.data ? <p className="muted-text">Masked key: {difyQuery.data.masked.difyApiKey}</p> : null}
+      {difyQuery.data ? <p className="muted-text">脱敏密钥：{difyQuery.data.masked.difyApiKey}</p> : null}
     </Panel>
   );
 };
@@ -399,10 +412,10 @@ const PluginsPage = ({ api }: AppContext) => {
   };
 
   return (
-    <Panel title="Plugin Manager" subtitle="Local and git plugin lifecycle operations">
+    <Panel title="插件管理" subtitle="本地与 Git 插件生命周期操作">
       <div className="form-grid">
         <label>
-          Import Local Path
+          本地导入路径
           <input value={localPath} onChange={(event) => setLocalPath(event.target.value)} placeholder="/path/to/plugin" />
         </label>
         <div className="row align-end">
@@ -411,20 +424,20 @@ const PluginsPage = ({ api }: AppContext) => {
             onClick={() =>
               void runPluginAction(
                 () => api.importPluginLocal({ path: localPath }),
-                `Imported local plugin from ${localPath}`
+                `已从本地路径导入插件：${localPath}`
               )
             }
             disabled={localPath.trim().length === 0}
           >
-            Import Local
+            本地导入
           </button>
         </div>
         <label>
-          Import Git URL
+          Git 仓库地址
           <input value={repoUrl} onChange={(event) => setRepoUrl(event.target.value)} placeholder="https://github.com/org/repo" />
         </label>
         <label>
-          Ref
+          分支/标签
           <input value={repoRef} onChange={(event) => setRepoRef(event.target.value)} placeholder="main" />
         </label>
         <div className="row align-end">
@@ -433,12 +446,12 @@ const PluginsPage = ({ api }: AppContext) => {
             onClick={() =>
               void runPluginAction(
                 () => api.importPluginGit({ repoUrl, ...(repoRef ? { ref: repoRef } : {}) }),
-                `Imported plugin from ${repoUrl}`
+                `已从仓库导入插件：${repoUrl}`
               )
             }
             disabled={repoUrl.trim().length === 0}
           >
-            Import Git
+            Git 导入
           </button>
         </div>
       </div>
@@ -449,11 +462,11 @@ const PluginsPage = ({ api }: AppContext) => {
       <table className="table">
         <thead>
           <tr>
-            <th>Plugin</th>
-            <th>Status</th>
-            <th>Source</th>
-            <th>Error</th>
-            <th>Actions</th>
+            <th>插件</th>
+            <th>状态</th>
+            <th>来源</th>
+            <th>错误</th>
+            <th>操作</th>
           </tr>
         </thead>
         <tbody>
@@ -462,26 +475,26 @@ const PluginsPage = ({ api }: AppContext) => {
               <td>{plugin.pluginId}</td>
               <td>{plugin.status}</td>
               <td>{plugin.source}</td>
-              <td>{plugin.error ?? 'none'}</td>
+              <td>{plugin.error ?? '无'}</td>
               <td>
                 <div className="inline-actions">
-                  <button type="button" onClick={() => void runPluginAction(() => api.enablePlugin(plugin.pluginId), `Enabled ${plugin.pluginId}`)}>
-                    Enable
+                  <button type="button" onClick={() => void runPluginAction(() => api.enablePlugin(plugin.pluginId), `已启用 ${plugin.pluginId}`)}>
+                    启用
                   </button>
                   <button
                     type="button"
-                    onClick={() => void runPluginAction(() => api.disablePlugin(plugin.pluginId), `Disabled ${plugin.pluginId}`)}
+                    onClick={() => void runPluginAction(() => api.disablePlugin(plugin.pluginId), `已停用 ${plugin.pluginId}`)}
                   >
-                    Disable
+                    停用
                   </button>
-                  <button type="button" onClick={() => void runPluginAction(() => api.reloadPlugin(plugin.pluginId), `Reloaded ${plugin.pluginId}`)}>
-                    Reload
+                  <button type="button" onClick={() => void runPluginAction(() => api.reloadPlugin(plugin.pluginId), `已重载 ${plugin.pluginId}`)}>
+                    重载
                   </button>
                   <button
                     type="button"
-                    onClick={() => void runPluginAction(() => api.uninstallPlugin(plugin.pluginId), `Uninstalled ${plugin.pluginId}`)}
+                    onClick={() => void runPluginAction(() => api.uninstallPlugin(plugin.pluginId), `已卸载 ${plugin.pluginId}`)}
                   >
-                    Uninstall
+                    卸载
                   </button>
                 </div>
               </td>
@@ -544,42 +557,42 @@ const SkillsToolsPage = ({ api }: AppContext) => {
 
   return (
     <div className="page-grid">
-      <Panel title="Skills" subtitle="Reload, import, toggle, and remove local skills">
+      <Panel title="技能" subtitle="重载、导入、开关与删除本地技能">
         <div className="row">
-          <button type="button" onClick={() => void runAction(() => api.reloadSkills(), 'Skills reloaded', refreshSkills)}>
-            Reload Skills
+          <button type="button" onClick={() => void runAction(() => api.reloadSkills(), '技能已重载', refreshSkills)}>
+            重载技能
           </button>
         </div>
         <div className="form-grid">
           <label>
-            Skill ZIP Path
+            技能 ZIP 路径
             <input value={skillZipPath} onChange={(event) => setSkillZipPath(event.target.value)} placeholder="/tmp/my-skill.zip" />
           </label>
           <div className="row align-end">
             <button
               type="button"
-              onClick={() => void runAction(() => api.importSkill(skillZipPath), `Imported skill ${skillZipPath}`, refreshSkills)}
+              onClick={() => void runAction(() => api.importSkill(skillZipPath), `已导入技能：${skillZipPath}`, refreshSkills)}
               disabled={skillZipPath.trim().length === 0}
             >
-              Import Skill
+              导入技能
             </button>
           </div>
         </div>
-        <p className="muted-text">Prompt Block:</p>
+        <p className="muted-text">提示词块：</p>
         <pre className="compact-pre">{skillsQuery.data?.promptBlock ?? ''}</pre>
         <ul className="simple-list">
           {(skillsQuery.data?.items ?? []).map((skill) => (
             <li key={skill.skillId}>
-              <strong>{skill.skillId}</strong> ({skill.scope ?? 'both'}) - enabled: {String(skill.enabled)}
+              <strong>{skill.skillId}</strong> ({skill.scope ?? 'both'}) - 已启用：{String(skill.enabled)}
               <div className="inline-actions">
-                <button type="button" onClick={() => void runAction(() => api.enableSkill(skill.skillId), `Enabled ${skill.skillId}`, refreshSkills)}>
-                  Enable
+                <button type="button" onClick={() => void runAction(() => api.enableSkill(skill.skillId), `已启用 ${skill.skillId}`, refreshSkills)}>
+                  启用
                 </button>
-                <button type="button" onClick={() => void runAction(() => api.disableSkill(skill.skillId), `Disabled ${skill.skillId}`, refreshSkills)}>
-                  Disable
+                <button type="button" onClick={() => void runAction(() => api.disableSkill(skill.skillId), `已停用 ${skill.skillId}`, refreshSkills)}>
+                  停用
                 </button>
-                <button type="button" onClick={() => void runAction(() => api.deleteSkill(skill.skillId), `Deleted ${skill.skillId}`, refreshSkills)}>
-                  Delete
+                <button type="button" onClick={() => void runAction(() => api.deleteSkill(skill.skillId), `已删除 ${skill.skillId}`, refreshSkills)}>
+                  删除
                 </button>
               </div>
             </li>
@@ -587,39 +600,39 @@ const SkillsToolsPage = ({ api }: AppContext) => {
         </ul>
       </Panel>
 
-      <Panel title="Tools" subtitle="Tool inventory and debug execution">
+      <Panel title="工具" subtitle="工具清单与调试执行">
         <div className="row">
-          <button type="button" onClick={() => void runAction(() => api.reloadTools(), 'Tools reloaded', refreshTools)}>
-            Reload Tools
+          <button type="button" onClick={() => void runAction(() => api.reloadTools(), '工具已重载', refreshTools)}>
+            重载工具
           </button>
         </div>
         <div className="form-grid">
           <label>
-            Tool Name
+            工具名
             <input value={toolName} onChange={(event) => setToolName(event.target.value)} />
           </label>
           <label>
-            Session ID (optional)
+            会话 ID（可选）
             <input value={toolSessionId} onChange={(event) => setToolSessionId(event.target.value)} />
           </label>
           <label className="full-span">
-            Arguments JSON
+            参数 JSON
             <textarea value={toolArgs} onChange={(event) => setToolArgs(event.target.value)} rows={4} />
           </label>
         </div>
         <div className="row">
           <button type="button" onClick={() => void executeTool()}>
-            Execute Tool
+            执行工具
           </button>
         </div>
         <pre className="compact-pre">{toolOutput}</pre>
         <table className="table">
           <thead>
             <tr>
-              <th>Tool</th>
-              <th>Source</th>
-              <th>Enabled</th>
-              <th>Actions</th>
+              <th>工具</th>
+              <th>来源</th>
+              <th>已启用</th>
+              <th>操作</th>
             </tr>
           </thead>
           <tbody>
@@ -630,14 +643,14 @@ const SkillsToolsPage = ({ api }: AppContext) => {
                 <td>{String(tool.enabled)}</td>
                 <td>
                   <div className="inline-actions">
-                    <button type="button" onClick={() => void runAction(() => api.enableTool(tool.toolName), `Enabled ${tool.toolName}`, refreshTools)}>
-                      Enable
+                    <button type="button" onClick={() => void runAction(() => api.enableTool(tool.toolName), `已启用 ${tool.toolName}`, refreshTools)}>
+                      启用
                     </button>
-                    <button type="button" onClick={() => void runAction(() => api.disableTool(tool.toolName), `Disabled ${tool.toolName}`, refreshTools)}>
-                      Disable
+                    <button type="button" onClick={() => void runAction(() => api.disableTool(tool.toolName), `已停用 ${tool.toolName}`, refreshTools)}>
+                      停用
                     </button>
-                    <button type="button" onClick={() => void runAction(() => api.deleteTool(tool.toolName), `Deleted ${tool.toolName}`, refreshTools)}>
-                      Delete
+                    <button type="button" onClick={() => void runAction(() => api.deleteTool(tool.toolName), `已删除 ${tool.toolName}`, refreshTools)}>
+                      删除
                     </button>
                   </div>
                 </td>
@@ -647,18 +660,18 @@ const SkillsToolsPage = ({ api }: AppContext) => {
         </table>
       </Panel>
 
-      <Panel title="Knowledge Base" subtitle="Document CRUD and retrieval">
+      <Panel title="知识库" subtitle="文档增删改查与检索">
         <div className="form-grid">
           <label>
-            Title
+            标题
             <input value={docTitle} onChange={(event) => setDocTitle(event.target.value)} />
           </label>
           <label>
-            Source (optional)
+            来源（可选）
             <input value={docSource} onChange={(event) => setDocSource(event.target.value)} />
           </label>
           <label className="full-span">
-            Content
+            内容
             <textarea value={docContent} onChange={(event) => setDocContent(event.target.value)} rows={4} />
           </label>
         </div>
@@ -668,18 +681,18 @@ const SkillsToolsPage = ({ api }: AppContext) => {
             onClick={() =>
               void runAction(
                 () => api.createKnowledgeDocument({ title: docTitle, content: docContent, ...(docSource ? { source: docSource } : {}) }),
-                `Created document ${docTitle}`,
+                `已创建文档：${docTitle}`,
                 refreshDocs
               )
             }
             disabled={docTitle.trim().length === 0 || docContent.trim().length === 0}
           >
-            Create Document
+            创建文档
           </button>
         </div>
         <div className="form-grid">
           <label>
-            Retrieve Query
+            检索问题
             <input value={retrieveQuery} onChange={(event) => setRetrieveQuery(event.target.value)} />
           </label>
           <label>
@@ -695,11 +708,11 @@ const SkillsToolsPage = ({ api }: AppContext) => {
                     const result = await api.retrieveKnowledge({ query: retrieveQuery, topK: retrieveTopK });
                     setRetrieveResult(stringifyJson(result));
                   },
-                  'Knowledge retrieved'
+                  '知识检索完成'
                 )
               }
             >
-              Retrieve
+              检索
             </button>
           </div>
         </div>
@@ -709,8 +722,8 @@ const SkillsToolsPage = ({ api }: AppContext) => {
             <li key={doc.docId}>
               <strong>{doc.title}</strong> ({doc.docId})
               <div className="inline-actions">
-                <button type="button" onClick={() => void runAction(() => api.deleteKnowledgeDocument(doc.docId), `Deleted ${doc.docId}`, refreshDocs)}>
-                  Delete
+                <button type="button" onClick={() => void runAction(() => api.deleteKnowledgeDocument(doc.docId), `已删除 ${doc.docId}`, refreshDocs)}>
+                  删除
                 </button>
               </div>
             </li>
@@ -762,14 +775,14 @@ const McpPage = ({ api }: AppContext) => {
   };
 
   return (
-    <Panel title="MCP Management" subtitle="Add / update / test / toggle / delete MCP servers">
+    <Panel title="MCP 管理" subtitle="新增 / 更新 / 测试 / 开关 / 删除 MCP 服务">
       <div className="form-grid">
         <label>
-          Name
+          名称
           <input value={name} onChange={(event) => setName(event.target.value)} />
         </label>
         <label>
-          Transport
+          传输方式
           <select value={transport} onChange={(event) => setTransport(event.target.value as 'stdio' | 'http' | 'sse')}>
             <option value="stdio">stdio</option>
             <option value="http">http</option>
@@ -777,18 +790,18 @@ const McpPage = ({ api }: AppContext) => {
           </select>
         </label>
         <label>
-          Enabled
+          已启用
           <select value={String(enabled)} onChange={(event) => setEnabled(event.target.value === 'true')}>
             <option value="true">true</option>
             <option value="false">false</option>
           </select>
         </label>
         <label>
-          Command
+          命令
           <input value={command} onChange={(event) => setCommand(event.target.value)} />
         </label>
         <label className="full-span">
-          Args JSON
+          参数 JSON
           <input value={argsRaw} onChange={(event) => setArgsRaw(event.target.value)} />
         </label>
         <label>
@@ -796,31 +809,31 @@ const McpPage = ({ api }: AppContext) => {
           <input value={url} onChange={(event) => setUrl(event.target.value)} placeholder="https://example.com/mcp" />
         </label>
         <label>
-          Timeout Seconds
+          超时秒数
           <input type="number" value={timeoutSec} min={1} onChange={(event) => setTimeoutSec(Number(event.target.value))} />
         </label>
       </div>
       <div className="row">
-        <button type="button" onClick={() => void runAction(() => api.addMcpServer(makePayload()), `Added ${name}`)}>
-          Add
+        <button type="button" onClick={() => void runAction(() => api.addMcpServer(makePayload()), `已新增 ${name}`)}>
+          新增
         </button>
-        <button type="button" onClick={() => void runAction(() => api.updateMcpServer(makePayload()), `Updated ${name}`)}>
-          Update
+        <button type="button" onClick={() => void runAction(() => api.updateMcpServer(makePayload()), `已更新 ${name}`)}>
+          更新
         </button>
-        <button type="button" onClick={() => void runAction(() => api.testMcpServer(name), `Tested ${name}`)}>
-          Test
+        <button type="button" onClick={() => void runAction(() => api.testMcpServer(name), `已测试 ${name}`)}>
+          测试
         </button>
       </div>
       <p className="muted-text">{statusText}</p>
       <table className="table">
         <thead>
           <tr>
-            <th>Name</th>
-            <th>Transport</th>
-            <th>Enabled</th>
-            <th>Healthy</th>
-            <th>Error</th>
-            <th>Actions</th>
+            <th>名称</th>
+            <th>传输方式</th>
+            <th>已启用</th>
+            <th>健康</th>
+            <th>错误</th>
+            <th>操作</th>
           </tr>
         </thead>
         <tbody>
@@ -830,17 +843,17 @@ const McpPage = ({ api }: AppContext) => {
               <td>{server.transport}</td>
               <td>{String(server.enabled)}</td>
               <td>{String(server.runtime.healthy)}</td>
-              <td>{server.runtime.lastError ?? 'none'}</td>
+              <td>{server.runtime.lastError ?? '无'}</td>
               <td>
                 <div className="inline-actions">
-                  <button type="button" onClick={() => void runAction(() => api.enableMcpServer(server.name), `Enabled ${server.name}`)}>
-                    Enable
+                  <button type="button" onClick={() => void runAction(() => api.enableMcpServer(server.name), `已启用 ${server.name}`)}>
+                    启用
                   </button>
-                  <button type="button" onClick={() => void runAction(() => api.disableMcpServer(server.name), `Disabled ${server.name}`)}>
-                    Disable
+                  <button type="button" onClick={() => void runAction(() => api.disableMcpServer(server.name), `已停用 ${server.name}`)}>
+                    停用
                   </button>
-                  <button type="button" onClick={() => void runAction(() => api.deleteMcpServer(server.name), `Deleted ${server.name}`)}>
-                    Delete
+                  <button type="button" onClick={() => void runAction(() => api.deleteMcpServer(server.name), `已删除 ${server.name}`)}>
+                    删除
                   </button>
                 </div>
               </td>
@@ -869,7 +882,7 @@ const SubagentsPage = ({ api }: AppContext) => {
     try {
       const parsed = JSON.parse(configRaw) as SubagentConfig;
       await api.updateSubagents(parsed);
-      setStatusText('Subagent configuration updated.');
+      setStatusText('子代理配置已更新。');
       await Promise.all([
         queryClientInternal.invalidateQueries({ queryKey: ['subagents-config'] }),
         queryClientInternal.invalidateQueries({ queryKey: ['subagents-tools'] }),
@@ -882,17 +895,17 @@ const SubagentsPage = ({ api }: AppContext) => {
 
   return (
     <div className="page-grid">
-      <Panel title="SubAgent Configuration" subtitle="JSON editor with server-side schema validation">
+      <Panel title="子代理配置" subtitle="带服务端 Schema 校验的 JSON 编辑器">
         <textarea value={configRaw} onChange={(event) => setConfigRaw(event.target.value)} rows={18} className="json-editor" />
         <div className="row">
           <button type="button" onClick={() => void saveConfig()}>
-            Save Config
+            保存配置
           </button>
         </div>
         <p className="muted-text">{statusText}</p>
       </Panel>
 
-      <Panel title="Available Tools" subtitle="Tool picker source for subagent assignment">
+      <Panel title="可用工具" subtitle="子代理工具分配来源">
         <ul className="simple-list">
           {(toolsQuery.data?.items ?? []).map((tool) => (
             <li key={tool.toolName}>
@@ -911,7 +924,7 @@ const ProactivePage = ({ api }: AppContext) => {
   const [form, setForm] = useState<ProactiveJobCreateRequest>({
     name: 'daily-briefing',
     sessionId: 'sess_001',
-    prompt: 'Send my daily summary',
+    prompt: '发送今日摘要',
     cronExpression: '0 9 * * *',
     timezone: 'UTC',
     runOnce: false,
@@ -924,7 +937,7 @@ const ProactivePage = ({ api }: AppContext) => {
   const createJob = async () => {
     try {
       await api.createProactiveJob(form);
-      setStatusText(`Created proactive job ${form.name}`);
+      setStatusText(`已创建主动任务：${form.name}`);
       await refresh();
     } catch (error) {
       setStatusText(formatError(error));
@@ -934,7 +947,7 @@ const ProactivePage = ({ api }: AppContext) => {
   const deleteJob = async (jobId: string) => {
     try {
       await api.deleteProactiveJob(jobId);
-      setStatusText(`Deleted proactive job ${jobId}`);
+      setStatusText(`已删除主动任务：${jobId}`);
       await refresh();
     } catch (error) {
       setStatusText(formatError(error));
@@ -942,33 +955,33 @@ const ProactivePage = ({ api }: AppContext) => {
   };
 
   return (
-    <Panel title="Proactive Jobs" subtitle="Create and remove scheduled jobs">
+    <Panel title="主动任务" subtitle="创建和删除计划任务">
       <div className="form-grid">
         <label>
-          Name
+          名称
           <input value={form.name} onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))} />
         </label>
         <label>
-          Session ID
+          会话 ID
           <input value={form.sessionId} onChange={(event) => setForm((prev) => ({ ...prev, sessionId: event.target.value }))} />
         </label>
         <label className="full-span">
-          Prompt
+          提示词
           <textarea value={form.prompt} onChange={(event) => setForm((prev) => ({ ...prev, prompt: event.target.value }))} rows={3} />
         </label>
         <label>
-          Cron Expression
+          Cron 表达式
           <input
             value={form.cronExpression ?? ''}
             onChange={(event) => setForm((prev) => ({ ...prev, cronExpression: event.target.value || undefined }))}
           />
         </label>
         <label>
-          Run At (ISO)
+          执行时间（ISO）
           <input value={form.runAt ?? ''} onChange={(event) => setForm((prev) => ({ ...prev, runAt: event.target.value || undefined }))} />
         </label>
         <label>
-          Timezone
+          时区
           <input
             value={form.timezone ?? ''}
             onChange={(event) => setForm((prev) => ({ ...prev, timezone: event.target.value || undefined }))}
@@ -976,37 +989,37 @@ const ProactivePage = ({ api }: AppContext) => {
           />
         </label>
         <label>
-          Run Once
+          仅运行一次
           <select value={String(form.runOnce ?? false)} onChange={(event) => setForm((prev) => ({ ...prev, runOnce: event.target.value === 'true' }))}>
-            <option value="false">false</option>
-            <option value="true">true</option>
+            <option value="false">否</option>
+            <option value="true">是</option>
           </select>
         </label>
         <label>
-          Enabled
+          已启用
           <select value={String(form.enabled ?? true)} onChange={(event) => setForm((prev) => ({ ...prev, enabled: event.target.value === 'true' }))}>
-            <option value="true">true</option>
-            <option value="false">false</option>
+            <option value="true">是</option>
+            <option value="false">否</option>
           </select>
         </label>
       </div>
 
       <div className="row">
         <button type="button" onClick={() => void createJob()}>
-          Create Job
+          创建任务
         </button>
       </div>
       <p className="muted-text">{statusText}</p>
       <table className="table">
         <thead>
           <tr>
-            <th>Job ID</th>
-            <th>Name</th>
-            <th>Status</th>
-            <th>Enabled</th>
-            <th>Schedule</th>
-            <th>Timezone</th>
-            <th>Action</th>
+            <th>任务 ID</th>
+            <th>名称</th>
+            <th>状态</th>
+            <th>已启用</th>
+            <th>调度</th>
+            <th>时区</th>
+            <th>操作</th>
           </tr>
         </thead>
         <tbody>
@@ -1016,11 +1029,11 @@ const ProactivePage = ({ api }: AppContext) => {
               <td>{job.name}</td>
               <td>{job.status}</td>
               <td>{String(job.enabled)}</td>
-              <td>{job.runOnce ? job.runAt ?? 'runOnce' : job.cronExpression ?? 'n/a'}</td>
+              <td>{job.runOnce ? job.runAt ?? '仅一次' : job.cronExpression ?? '无'}</td>
               <td>{job.timezone ?? 'UTC'}</td>
               <td>
                 <button type="button" onClick={() => void deleteJob(job.jobId)}>
-                  Delete
+                  删除
                 </button>
               </td>
             </tr>
@@ -1041,12 +1054,12 @@ const DiagnosticsPanel = ({
   return (
     <aside className="diagnostics">
       <header>
-        <h2>Diagnostics</h2>
+        <h2>诊断</h2>
         <button type="button" onClick={onClear}>
-          Clear
+          清空
         </button>
       </header>
-      <p className="muted-text">Request correlation timeline (x-request-id)</p>
+      <p className="muted-text">请求关联时间线（x-request-id）</p>
       <ul>
         {traces.map((entry) => (
           <li key={`${entry.requestId}_${entry.endedAt}`}>
@@ -1057,7 +1070,7 @@ const DiagnosticsPanel = ({
               {entry.method} {entry.path}
             </div>
             <div>
-              status={entry.statusCode} duration={entry.durationMs}ms
+              状态={entry.statusCode} 耗时={entry.durationMs}ms
             </div>
             {entry.errorMessage ? <div className="error-text">{entry.errorMessage}</div> : null}
           </li>
@@ -1114,11 +1127,11 @@ function App() {
     <main className="shell">
       <header className="topbar">
         <div>
-          <h1>CWORK Operations Console</h1>
-          <p>Phase 5 WebUI foundation for runtime, tools, skills, plugins, MCP, subagents, proactive jobs, and diagnostics.</p>
+          <h1>CWORK 运维控制台</h1>
+          <p>第 5 阶段 WebUI 基础：覆盖运行时、工具、技能、插件、MCP、子代理、主动任务与诊断。</p>
         </div>
         <label className="token-input">
-          API Token
+          API 令牌
           <input value={apiToken} onChange={(event) => setApiToken(event.target.value)} />
         </label>
       </header>

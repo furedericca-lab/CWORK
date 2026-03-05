@@ -9,6 +9,8 @@ export interface SandboxAdapterOptions {
   mode?: RuntimeMode;
   timeoutMs?: number;
   maxOutputBytes?: number;
+  cpuSeconds?: number;
+  memoryKb?: number;
   onAudit?: (payload: {
     action: string;
     requestId: string;
@@ -41,11 +43,15 @@ export class SandboxAdapter {
   private readonly mode: RuntimeMode;
   private readonly timeoutMs: number;
   private readonly maxOutputBytes: number;
+  private readonly cpuSeconds: number;
+  private readonly memoryKb: number;
 
   constructor(private readonly options: SandboxAdapterOptions = {}) {
     this.mode = options.mode ?? 'none';
     this.timeoutMs = options.timeoutMs ?? 3_000;
     this.maxOutputBytes = options.maxOutputBytes ?? 8_192;
+    this.cpuSeconds = options.cpuSeconds ?? 3;
+    this.memoryKb = options.memoryKb ?? 262_144;
   }
 
   getMode(): RuntimeMode {
@@ -89,7 +95,8 @@ export class SandboxAdapter {
     }
 
     try {
-      const result = await runExecFile('bash', ['-lc', command], this.timeoutMs);
+      const guardedCommand = `ulimit -t ${this.cpuSeconds}; ulimit -v ${this.memoryKb}; ${command}`;
+      const result = await runExecFile('bash', ['-lc', guardedCommand], this.timeoutMs);
       const output = {
         stdout: limitString(result.stdout, this.maxOutputBytes),
         stderr: limitString(result.stderr, this.maxOutputBytes)
@@ -99,7 +106,7 @@ export class SandboxAdapter {
         requestId: ctx.requestId,
         ...(ctx.sessionId ? { sessionId: ctx.sessionId } : {}),
         result: 'success',
-        details: { command }
+        details: { command, cpuSeconds: this.cpuSeconds, memoryKb: this.memoryKb }
       });
       return output;
     } catch (error) {
@@ -108,7 +115,7 @@ export class SandboxAdapter {
         requestId: ctx.requestId,
         ...(ctx.sessionId ? { sessionId: ctx.sessionId } : {}),
         result: 'failure',
-        details: { command, reason: error instanceof Error ? error.message : String(error) }
+        details: { command, reason: error instanceof Error ? error.message : String(error), cpuSeconds: this.cpuSeconds, memoryKb: this.memoryKb }
       });
       throw new AppError(ERROR_CODE.TIMEOUT, 'Sandbox execution failed', {
         reason: error instanceof Error ? error.message : String(error)

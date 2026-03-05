@@ -34,6 +34,15 @@ describe('ProactiveManager', () => {
       })
     ).rejects.toThrow(/Invalid timezone/);
 
+    await expect(
+      manager.createJob({
+        name: 'cron-bad',
+        sessionId: 'sess_1',
+        prompt: 'do cron',
+        cronExpression: '0 9 * *'
+      })
+    ).rejects.toThrow(/Expected 5 or 6 fields/);
+
     const oneShot = await manager.createJob({
       name: 'one-shot',
       sessionId: 'sess_2',

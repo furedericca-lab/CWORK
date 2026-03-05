@@ -51,9 +51,9 @@ describe('web console e2e smoke', () => {
     await new Promise((resolve) => setTimeout(resolve, 60));
 
     const text = document.body.textContent ?? '';
-    expect(text).toContain('CWORK Operations Console');
-    expect(text).toContain('Service Health');
-    expect(text).toContain('Capability Status');
+    expect(text).toContain('CWORK 运维控制台');
+    expect(text).toContain('服务健康');
+    expect(text).toContain('能力状态');
     expect(fetchMock).toHaveBeenCalled();
   });
 });

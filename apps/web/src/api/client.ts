@@ -31,7 +31,7 @@ import type {
 const API_BASE = import.meta.env.VITE_API_BASE ?? '/api/v1';
 
 const REQUEST_ID_HEADER = 'x-request-id';
-const FALLBACK_AUTH_TOKEN = 'dev-token';
+const FALLBACK_AUTH_TOKEN = import.meta.env.DEV ? 'dev-token' : '';
 
 const runtimeSseEvents: ReadonlySet<string> = new Set<RuntimeSseEventName>([
   'meta',

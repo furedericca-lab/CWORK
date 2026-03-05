@@ -4,6 +4,7 @@ import { proactiveJobCreateRequestSchema } from '@cwork/shared';
 import { AppError } from '../errors/app-error';
 import { ERROR_CODE } from '../errors/error-code';
 import type { ProactiveRepository } from '../repo/interfaces';
+import { parseCronExpression } from './cron';
 
 const nowIso = () => new Date().toISOString();
 
@@ -85,6 +86,10 @@ export class ProactiveManager {
 
     if (!runOnce && !input.cronExpression) {
       throw new AppError(ERROR_CODE.VALIDATION_ERROR, 'Recurring proactive job requires cronExpression');
+    }
+
+    if (!runOnce && input.cronExpression) {
+      parseCronExpression(input.cronExpression);
     }
 
     if (runOnce && !input.runAt) {

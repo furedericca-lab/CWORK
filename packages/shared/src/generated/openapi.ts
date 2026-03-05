@@ -3,7 +3,126 @@
 
 export const openApiDocument = {
   "components": {
+    "parameters": {
+      "DocIdPath": {
+        "in": "path",
+        "name": "docId",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      },
+      "JobIdPath": {
+        "in": "path",
+        "name": "jobId",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      },
+      "PluginIdPath": {
+        "in": "path",
+        "name": "pluginId",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      },
+      "SkillIdPath": {
+        "in": "path",
+        "name": "skillId",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      },
+      "TaskIdPath": {
+        "in": "path",
+        "name": "taskId",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      },
+      "ToolNamePath": {
+        "in": "path",
+        "name": "toolName",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      }
+    },
     "schemas": {
+      "BooleanOkResponse": {
+        "properties": {
+          "ok": {
+            "const": true,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "ok"
+        ],
+        "type": "object"
+      },
+      "CapabilityState": {
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "healthy": {
+            "type": "boolean"
+          },
+          "lastCheckAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "lastError": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "enabled",
+          "healthy"
+        ],
+        "type": "object"
+      },
+      "CapabilityStatusResponse": {
+        "properties": {
+          "dify": {
+            "$ref": "#/components/schemas/CapabilityState"
+          },
+          "knowledge": {
+            "$ref": "#/components/schemas/CapabilityState"
+          },
+          "mcp": {
+            "$ref": "#/components/schemas/CapabilityState"
+          },
+          "plugins": {
+            "$ref": "#/components/schemas/CapabilityState"
+          },
+          "sandbox": {
+            "$ref": "#/components/schemas/CapabilityState"
+          },
+          "search": {
+            "$ref": "#/components/schemas/CapabilityState"
+          },
+          "skills": {
+            "$ref": "#/components/schemas/CapabilityState"
+          }
+        },
+        "required": [
+          "dify",
+          "plugins",
+          "skills",
+          "mcp",
+          "search",
+          "knowledge",
+          "sandbox"
+        ],
+        "type": "object"
+      },
       "DifyConfig": {
         "properties": {
           "difyApiBase": {
@@ -129,6 +248,295 @@ export const openApiDocument = {
         ],
         "type": "object"
       },
+      "KnowledgeDocument": {
+        "properties": {
+          "content": {
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "docId": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "docId",
+          "title",
+          "content",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "KnowledgeDocumentCreateRequest": {
+        "properties": {
+          "content": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "content"
+        ],
+        "type": "object"
+      },
+      "KnowledgeDocumentCreateResponse": {
+        "properties": {
+          "document": {
+            "$ref": "#/components/schemas/KnowledgeDocument"
+          },
+          "task": {
+            "$ref": "#/components/schemas/KnowledgeTaskStatus"
+          }
+        },
+        "required": [
+          "document",
+          "task"
+        ],
+        "type": "object"
+      },
+      "KnowledgeDocumentListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/KnowledgeDocument"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "type": "object"
+      },
+      "KnowledgeRetrieveItem": {
+        "properties": {
+          "citation": {
+            "type": "string"
+          },
+          "docId": {
+            "type": "string"
+          },
+          "score": {
+            "type": "number"
+          },
+          "snippet": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "docId",
+          "title",
+          "snippet",
+          "score"
+        ],
+        "type": "object"
+      },
+      "KnowledgeRetrieveRequest": {
+        "properties": {
+          "query": {
+            "type": "string"
+          },
+          "topK": {
+            "default": 5,
+            "maximum": 20,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "type": "object"
+      },
+      "KnowledgeRetrieveResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/KnowledgeRetrieveItem"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "type": "object"
+      },
+      "KnowledgeTaskStatus": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "error": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "processing",
+              "completed",
+              "failed"
+            ],
+            "type": "string"
+          },
+          "taskId": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "taskId",
+          "status",
+          "createdAt",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
+      "McpServerConfig": {
+        "properties": {
+          "args": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "command": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          },
+          "timeoutSec": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "transport": {
+            "enum": [
+              "stdio",
+              "http",
+              "sse"
+            ],
+            "type": "string"
+          },
+          "url": {
+            "format": "uri",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "enabled",
+          "transport"
+        ],
+        "type": "object"
+      },
+      "McpServerListItem": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/McpServerConfig"
+          },
+          {
+            "properties": {
+              "runtime": {
+                "$ref": "#/components/schemas/McpServerRuntimeState"
+              }
+            },
+            "required": [
+              "runtime"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "McpServerListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/McpServerListItem"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "type": "object"
+      },
+      "McpServerNameRequest": {
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "type": "object"
+      },
+      "McpServerRuntimeState": {
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "healthy": {
+            "type": "boolean"
+          },
+          "lastCheckAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "lastError": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "enabled",
+          "healthy"
+        ],
+        "type": "object"
+      },
+      "McpServerTestResponse": {
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "ok": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "ok"
+        ],
+        "type": "object"
+      },
       "MessagePart": {
         "oneOf": [
           {
@@ -152,6 +560,27 @@ export const openApiDocument = {
               "attachmentId": {
                 "type": "string"
               },
+              "path": {
+                "type": "string"
+              },
+              "type": {
+                "const": "image",
+                "type": "string"
+              },
+              "url": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "attachmentId": {
+                "type": "string"
+              },
               "filename": {
                 "type": "string"
               },
@@ -159,12 +588,46 @@ export const openApiDocument = {
                 "type": "string"
               },
               "type": {
-                "enum": [
-                  "image",
-                  "file",
-                  "video",
-                  "record"
-                ],
+                "const": "file",
+                "type": "string"
+              },
+              "url": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "attachmentId": {
+                "type": "string"
+              },
+              "path": {
+                "type": "string"
+              },
+              "type": {
+                "const": "video",
+                "type": "string"
+              },
+              "url": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "path": {
+                "type": "string"
+              },
+              "type": {
+                "const": "record",
                 "type": "string"
               },
               "url": {
@@ -281,6 +744,119 @@ export const openApiDocument = {
         ],
         "type": "object"
       },
+      "ProactiveJob": {
+        "properties": {
+          "cronExpression": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "jobId": {
+            "type": "string"
+          },
+          "lastError": {
+            "type": "string"
+          },
+          "lastRunAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "prompt": {
+            "type": "string"
+          },
+          "runAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "runOnce": {
+            "type": "boolean"
+          },
+          "sessionId": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "running",
+              "succeeded",
+              "failed",
+              "cancelled"
+            ],
+            "type": "string"
+          },
+          "timezone": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "jobId",
+          "name",
+          "sessionId",
+          "prompt",
+          "runOnce",
+          "enabled",
+          "status",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
+      "ProactiveJobCreateRequest": {
+        "properties": {
+          "cronExpression": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          },
+          "prompt": {
+            "type": "string"
+          },
+          "runAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "runOnce": {
+            "type": "boolean"
+          },
+          "sessionId": {
+            "type": "string"
+          },
+          "timezone": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "sessionId",
+          "prompt"
+        ],
+        "type": "object"
+      },
+      "ProactiveJobListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ProactiveJob"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "type": "object"
+      },
       "ReadyzResponse": {
         "properties": {
           "ok": {
@@ -385,6 +961,284 @@ export const openApiDocument = {
           "pageSize"
         ],
         "type": "object"
+      },
+      "SkillDescriptor": {
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          },
+          "scope": {
+            "enum": [
+              "local_only",
+              "sandbox_only",
+              "both"
+            ],
+            "type": "string"
+          },
+          "skillId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "skillId",
+          "name",
+          "scope",
+          "enabled"
+        ],
+        "type": "object"
+      },
+      "SkillDownloadResponse": {
+        "properties": {
+          "path": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "type": "object"
+      },
+      "SkillImportRequest": {
+        "properties": {
+          "zipPath": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "zipPath"
+        ],
+        "type": "object"
+      },
+      "SkillListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SkillDescriptor"
+            },
+            "type": "array"
+          },
+          "promptBlock": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "items",
+          "promptBlock"
+        ],
+        "type": "object"
+      },
+      "SkillReloadResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SkillDescriptor"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "type": "object"
+      },
+      "SubagentAvailableToolsResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ToolItem"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "type": "object"
+      },
+      "SubagentConfig": {
+        "properties": {
+          "agents": {
+            "items": {
+              "$ref": "#/components/schemas/SubagentConfigAgent"
+            },
+            "type": "array"
+          },
+          "mainEnable": {
+            "type": "boolean"
+          },
+          "removeMainDuplicateTools": {
+            "type": "boolean"
+          },
+          "routerSystemPrompt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "mainEnable",
+          "removeMainDuplicateTools",
+          "agents"
+        ],
+        "type": "object"
+      },
+      "SubagentConfigAgent": {
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          },
+          "providerId": {
+            "type": "string"
+          },
+          "publicDescription": {
+            "type": "string"
+          },
+          "subagentId": {
+            "type": "string"
+          },
+          "systemPrompt": {
+            "type": "string"
+          },
+          "tools": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "subagentId",
+          "name",
+          "enabled",
+          "tools"
+        ],
+        "type": "object"
+      },
+      "ToolExecuteRequest": {
+        "properties": {
+          "arguments": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "sessionId": {
+            "type": "string"
+          },
+          "toolName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "toolName",
+          "arguments"
+        ],
+        "type": "object"
+      },
+      "ToolExecuteResponse": {
+        "properties": {
+          "error": {
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "message"
+            ],
+            "type": "object"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "output": {}
+        },
+        "required": [
+          "ok"
+        ],
+        "type": "object"
+      },
+      "ToolItem": {
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "schema": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ToolSchemaField"
+            },
+            "type": "object"
+          },
+          "source": {
+            "enum": [
+              "builtin",
+              "mcp",
+              "plugin"
+            ],
+            "type": "string"
+          },
+          "toolName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "toolName",
+          "description",
+          "enabled",
+          "schema",
+          "source"
+        ],
+        "type": "object"
+      },
+      "ToolListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ToolItem"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "type": "object"
+      },
+      "ToolSchemaField": {
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "type": {
+            "enum": [
+              "string",
+              "number",
+              "boolean",
+              "object",
+              "array"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "type": "object"
       }
     },
     "securitySchemes": {
@@ -402,6 +1256,29 @@ export const openApiDocument = {
   },
   "openapi": "3.1.0",
   "paths": {
+    "/capabilities/status": {
+      "get": {
+        "operationId": "getCapabilitiesStatus",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CapabilityStatusResponse"
+                }
+              }
+            },
+            "description": "Capability status"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Get capability status"
+      }
+    },
     "/config/dify": {
       "get": {
         "operationId": "getDifyConfig",
@@ -482,6 +1359,149 @@ export const openApiDocument = {
           }
         },
         "summary": "Service liveness check"
+      }
+    },
+    "/kb/documents": {
+      "get": {
+        "operationId": "listKnowledgeDocuments",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KnowledgeDocumentListResponse"
+                }
+              }
+            },
+            "description": "Document list"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "List knowledge documents"
+      },
+      "post": {
+        "operationId": "createKnowledgeDocument",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/KnowledgeDocumentCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KnowledgeDocumentCreateResponse"
+                }
+              }
+            },
+            "description": "Created document and task"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Create knowledge document and indexing task"
+      }
+    },
+    "/kb/documents/{docId}": {
+      "delete": {
+        "operationId": "deleteKnowledgeDocument",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DocIdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BooleanOkResponse"
+                }
+              }
+            },
+            "description": "Deleted"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Delete knowledge document"
+      }
+    },
+    "/kb/retrieve": {
+      "post": {
+        "operationId": "retrieveKnowledge",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/KnowledgeRetrieveRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KnowledgeRetrieveResponse"
+                }
+              }
+            },
+            "description": "Retrieval result"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Retrieve knowledge snippets"
+      }
+    },
+    "/kb/tasks/{taskId}": {
+      "get": {
+        "operationId": "getKnowledgeTask",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TaskIdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KnowledgeTaskStatus"
+                }
+              }
+            },
+            "description": "Task status"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Get knowledge indexing task"
       }
     },
     "/plugins": {
@@ -573,6 +1593,210 @@ export const openApiDocument = {
         "summary": "Import plugin from local path"
       }
     },
+    "/plugins/{pluginId}": {
+      "delete": {
+        "operationId": "deletePlugin",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PluginIdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BooleanOkResponse"
+                }
+              }
+            },
+            "description": "Deleted"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Uninstall plugin"
+      }
+    },
+    "/plugins/{pluginId}/disable": {
+      "post": {
+        "operationId": "disablePlugin",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PluginIdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PluginItem"
+                }
+              }
+            },
+            "description": "Updated plugin"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Disable plugin"
+      }
+    },
+    "/plugins/{pluginId}/enable": {
+      "post": {
+        "operationId": "enablePlugin",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PluginIdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PluginItem"
+                }
+              }
+            },
+            "description": "Updated plugin"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Enable plugin"
+      }
+    },
+    "/plugins/{pluginId}/reload": {
+      "post": {
+        "operationId": "reloadPlugin",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PluginIdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PluginItem"
+                }
+              }
+            },
+            "description": "Updated plugin"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Reload plugin"
+      }
+    },
+    "/proactive/jobs": {
+      "get": {
+        "operationId": "listProactiveJobs",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProactiveJobListResponse"
+                }
+              }
+            },
+            "description": "Proactive job list"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "List proactive jobs"
+      },
+      "post": {
+        "operationId": "createProactiveJob",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProactiveJobCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProactiveJob"
+                }
+              }
+            },
+            "description": "Created proactive job"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Create proactive job"
+      }
+    },
+    "/proactive/jobs/{jobId}": {
+      "delete": {
+        "operationId": "deleteProactiveJob",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/JobIdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BooleanOkResponse"
+                }
+              }
+            },
+            "description": "Deleted"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Delete proactive job"
+      }
+    },
     "/readyz": {
       "get": {
         "operationId": "getReadyz",
@@ -647,6 +1871,27 @@ export const openApiDocument = {
     "/runtime/sessions": {
       "get": {
         "operationId": "listRuntimeSessions",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "pageSize",
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
@@ -676,6 +1921,668 @@ export const openApiDocument = {
         ],
         "summary": "List runtime sessions"
       }
+    },
+    "/skills": {
+      "get": {
+        "operationId": "listSkills",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillListResponse"
+                }
+              }
+            },
+            "description": "Skills with prompt block"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "List skills and prompt block"
+      }
+    },
+    "/skills/import": {
+      "post": {
+        "operationId": "importSkill",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SkillImportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillDescriptor"
+                }
+              }
+            },
+            "description": "Imported skill"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Import skill from zip"
+      }
+    },
+    "/skills/reload": {
+      "post": {
+        "operationId": "reloadSkills",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillReloadResponse"
+                }
+              }
+            },
+            "description": "Reloaded skills"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Reload skills"
+      }
+    },
+    "/skills/{skillId}": {
+      "delete": {
+        "operationId": "deleteSkill",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/SkillIdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BooleanOkResponse"
+                }
+              }
+            },
+            "description": "Deleted"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Delete skill"
+      }
+    },
+    "/skills/{skillId}/disable": {
+      "post": {
+        "operationId": "disableSkill",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/SkillIdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillDescriptor"
+                }
+              }
+            },
+            "description": "Updated skill"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Disable skill"
+      }
+    },
+    "/skills/{skillId}/download": {
+      "get": {
+        "operationId": "getSkillDownloadPath",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/SkillIdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillDownloadResponse"
+                }
+              }
+            },
+            "description": "Download path"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Get skill zip path"
+      }
+    },
+    "/skills/{skillId}/enable": {
+      "post": {
+        "operationId": "enableSkill",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/SkillIdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillDescriptor"
+                }
+              }
+            },
+            "description": "Updated skill"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Enable skill"
+      }
+    },
+    "/subagents": {
+      "get": {
+        "operationId": "getSubagents",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubagentConfig"
+                }
+              }
+            },
+            "description": "Subagent config"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Get subagent config"
+      },
+      "put": {
+        "operationId": "putSubagents",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubagentConfig"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubagentConfig"
+                }
+              }
+            },
+            "description": "Updated subagent config"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Update subagent config"
+      }
+    },
+    "/subagents/available-tools": {
+      "get": {
+        "operationId": "getSubagentAvailableTools",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubagentAvailableToolsResponse"
+                }
+              }
+            },
+            "description": "Available tools"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "List available tools for subagents"
+      }
+    },
+    "/tools": {
+      "get": {
+        "operationId": "listTools",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ToolListResponse"
+                }
+              }
+            },
+            "description": "Tool list"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "List tools"
+      }
+    },
+    "/tools/execute": {
+      "post": {
+        "operationId": "postToolsExecute",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ToolExecuteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ToolExecuteResponse"
+                }
+              }
+            },
+            "description": "Execution result"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Execute tool"
+      }
+    },
+    "/tools/mcp/add": {
+      "post": {
+        "operationId": "addMcpServer",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/McpServerConfig"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/McpServerConfig"
+                }
+              }
+            },
+            "description": "Added server config"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Add MCP server"
+      }
+    },
+    "/tools/mcp/delete": {
+      "post": {
+        "operationId": "deleteMcpServer",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/McpServerNameRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BooleanOkResponse"
+                }
+              }
+            },
+            "description": "Deleted"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Delete MCP server"
+      }
+    },
+    "/tools/mcp/disable": {
+      "post": {
+        "operationId": "disableMcpServer",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/McpServerNameRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BooleanOkResponse"
+                }
+              }
+            },
+            "description": "Disabled"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Disable MCP server"
+      }
+    },
+    "/tools/mcp/enable": {
+      "post": {
+        "operationId": "enableMcpServer",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/McpServerNameRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BooleanOkResponse"
+                }
+              }
+            },
+            "description": "Enabled"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Enable MCP server"
+      }
+    },
+    "/tools/mcp/servers": {
+      "get": {
+        "operationId": "listMcpServers",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/McpServerListResponse"
+                }
+              }
+            },
+            "description": "MCP server list"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "List MCP servers"
+      }
+    },
+    "/tools/mcp/test": {
+      "post": {
+        "operationId": "testMcpServer",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/McpServerNameRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/McpServerTestResponse"
+                }
+              }
+            },
+            "description": "Test result"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Test MCP server"
+      }
+    },
+    "/tools/mcp/update": {
+      "post": {
+        "operationId": "updateMcpServer",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/McpServerConfig"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/McpServerConfig"
+                }
+              }
+            },
+            "description": "Updated server config"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Update MCP server"
+      }
+    },
+    "/tools/reload": {
+      "post": {
+        "operationId": "postToolsReload",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ToolListResponse"
+                }
+              }
+            },
+            "description": "Reloaded tool list"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Reload built-in and dynamic tools"
+      }
+    },
+    "/tools/{toolName}": {
+      "delete": {
+        "operationId": "deleteTool",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ToolNamePath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BooleanOkResponse"
+                }
+              }
+            },
+            "description": "Deleted"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Delete tool"
+      }
+    },
+    "/tools/{toolName}/disable": {
+      "post": {
+        "operationId": "postToolDisable",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ToolNamePath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ToolItem"
+                }
+              }
+            },
+            "description": "Updated tool"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Disable tool"
+      }
+    },
+    "/tools/{toolName}/enable": {
+      "post": {
+        "operationId": "postToolEnable",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ToolNamePath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ToolItem"
+                }
+              }
+            },
+            "description": "Updated tool"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Enable tool"
+      }
     }
   },
   "servers": [
@@ -685,15 +2592,48 @@ export const openApiDocument = {
   ]
 } as const;
 
-export type OpenApiPath = '/config/dify' | '/healthz' | '/plugins' | '/plugins/import/git' | '/plugins/import/local' | '/readyz' | '/runtime/chat' | '/runtime/sessions';
+export type OpenApiPath = '/capabilities/status' | '/config/dify' | '/healthz' | '/kb/documents' | '/kb/documents/{docId}' | '/kb/retrieve' | '/kb/tasks/{taskId}' | '/plugins' | '/plugins/import/git' | '/plugins/import/local' | '/plugins/{pluginId}' | '/plugins/{pluginId}/disable' | '/plugins/{pluginId}/enable' | '/plugins/{pluginId}/reload' | '/proactive/jobs' | '/proactive/jobs/{jobId}' | '/readyz' | '/runtime/chat' | '/runtime/sessions' | '/skills' | '/skills/import' | '/skills/reload' | '/skills/{skillId}' | '/skills/{skillId}/disable' | '/skills/{skillId}/download' | '/skills/{skillId}/enable' | '/subagents' | '/subagents/available-tools' | '/tools' | '/tools/execute' | '/tools/mcp/add' | '/tools/mcp/delete' | '/tools/mcp/disable' | '/tools/mcp/enable' | '/tools/mcp/servers' | '/tools/mcp/test' | '/tools/mcp/update' | '/tools/reload' | '/tools/{toolName}' | '/tools/{toolName}/disable' | '/tools/{toolName}/enable';
 
 export const openApiPathMethodMap = {
+  '/capabilities/status': ['get'],
   '/config/dify': ['get', 'put'],
   '/healthz': ['get'],
+  '/kb/documents': ['get', 'post'],
+  '/kb/documents/{docId}': ['delete'],
+  '/kb/retrieve': ['post'],
+  '/kb/tasks/{taskId}': ['get'],
   '/plugins': ['get'],
   '/plugins/import/git': ['post'],
   '/plugins/import/local': ['post'],
+  '/plugins/{pluginId}': ['delete'],
+  '/plugins/{pluginId}/disable': ['post'],
+  '/plugins/{pluginId}/enable': ['post'],
+  '/plugins/{pluginId}/reload': ['post'],
+  '/proactive/jobs': ['get', 'post'],
+  '/proactive/jobs/{jobId}': ['delete'],
   '/readyz': ['get'],
   '/runtime/chat': ['post'],
   '/runtime/sessions': ['get'],
+  '/skills': ['get'],
+  '/skills/import': ['post'],
+  '/skills/reload': ['post'],
+  '/skills/{skillId}': ['delete'],
+  '/skills/{skillId}/disable': ['post'],
+  '/skills/{skillId}/download': ['get'],
+  '/skills/{skillId}/enable': ['post'],
+  '/subagents': ['get', 'put'],
+  '/subagents/available-tools': ['get'],
+  '/tools': ['get'],
+  '/tools/execute': ['post'],
+  '/tools/mcp/add': ['post'],
+  '/tools/mcp/delete': ['post'],
+  '/tools/mcp/disable': ['post'],
+  '/tools/mcp/enable': ['post'],
+  '/tools/mcp/servers': ['get'],
+  '/tools/mcp/test': ['post'],
+  '/tools/mcp/update': ['post'],
+  '/tools/reload': ['post'],
+  '/tools/{toolName}': ['delete'],
+  '/tools/{toolName}/disable': ['post'],
+  '/tools/{toolName}/enable': ['post'],
 } as const;

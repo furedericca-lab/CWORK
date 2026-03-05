@@ -28,12 +28,27 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ReadyzResponse'
+
   /runtime/sessions:
     get:
       summary: List runtime sessions
       operationId: listRuntimeSessions
       security:
         - bearerAuth: []
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - in: query
+          name: pageSize
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
       responses:
         '200':
           description: Runtime session list
@@ -47,6 +62,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
+
   /runtime/chat:
     post:
       summary: Execute runtime chat request and stream results
@@ -78,6 +94,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
+
   /config/dify:
     get:
       summary: Get effective Dify config
@@ -115,6 +132,553 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
+
+  /subagents:
+    get:
+      summary: Get subagent config
+      operationId: getSubagents
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Subagent config
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubagentConfig'
+    put:
+      summary: Update subagent config
+      operationId: putSubagents
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubagentConfig'
+      responses:
+        '200':
+          description: Updated subagent config
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubagentConfig'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+
+  /subagents/available-tools:
+    get:
+      summary: List available tools for subagents
+      operationId: getSubagentAvailableTools
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Available tools
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubagentAvailableToolsResponse'
+
+  /tools:
+    get:
+      summary: List tools
+      operationId: listTools
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Tool list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolListResponse'
+
+  /tools/reload:
+    post:
+      summary: Reload built-in and dynamic tools
+      operationId: postToolsReload
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Reloaded tool list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolListResponse'
+
+  /tools/{toolName}/enable:
+    post:
+      summary: Enable tool
+      operationId: postToolEnable
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ToolNamePath'
+      responses:
+        '200':
+          description: Updated tool
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolItem'
+
+  /tools/{toolName}/disable:
+    post:
+      summary: Disable tool
+      operationId: postToolDisable
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ToolNamePath'
+      responses:
+        '200':
+          description: Updated tool
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolItem'
+
+  /tools/{toolName}:
+    delete:
+      summary: Delete tool
+      operationId: deleteTool
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ToolNamePath'
+      responses:
+        '200':
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BooleanOkResponse'
+
+  /tools/execute:
+    post:
+      summary: Execute tool
+      operationId: postToolsExecute
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ToolExecuteRequest'
+      responses:
+        '200':
+          description: Execution result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolExecuteResponse'
+
+  /tools/mcp/servers:
+    get:
+      summary: List MCP servers
+      operationId: listMcpServers
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: MCP server list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/McpServerListResponse'
+
+  /tools/mcp/add:
+    post:
+      summary: Add MCP server
+      operationId: addMcpServer
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/McpServerConfig'
+      responses:
+        '200':
+          description: Added server config
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/McpServerConfig'
+
+  /tools/mcp/update:
+    post:
+      summary: Update MCP server
+      operationId: updateMcpServer
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/McpServerConfig'
+      responses:
+        '200':
+          description: Updated server config
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/McpServerConfig'
+
+  /tools/mcp/delete:
+    post:
+      summary: Delete MCP server
+      operationId: deleteMcpServer
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/McpServerNameRequest'
+      responses:
+        '200':
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BooleanOkResponse'
+
+  /tools/mcp/test:
+    post:
+      summary: Test MCP server
+      operationId: testMcpServer
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/McpServerNameRequest'
+      responses:
+        '200':
+          description: Test result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/McpServerTestResponse'
+
+  /tools/mcp/enable:
+    post:
+      summary: Enable MCP server
+      operationId: enableMcpServer
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/McpServerNameRequest'
+      responses:
+        '200':
+          description: Enabled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BooleanOkResponse'
+
+  /tools/mcp/disable:
+    post:
+      summary: Disable MCP server
+      operationId: disableMcpServer
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/McpServerNameRequest'
+      responses:
+        '200':
+          description: Disabled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BooleanOkResponse'
+
+  /capabilities/status:
+    get:
+      summary: Get capability status
+      operationId: getCapabilitiesStatus
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Capability status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CapabilityStatusResponse'
+
+  /proactive/jobs:
+    get:
+      summary: List proactive jobs
+      operationId: listProactiveJobs
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Proactive job list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProactiveJobListResponse'
+    post:
+      summary: Create proactive job
+      operationId: createProactiveJob
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProactiveJobCreateRequest'
+      responses:
+        '200':
+          description: Created proactive job
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProactiveJob'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+
+  /proactive/jobs/{jobId}:
+    delete:
+      summary: Delete proactive job
+      operationId: deleteProactiveJob
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/JobIdPath'
+      responses:
+        '200':
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BooleanOkResponse'
+
+  /kb/documents:
+    get:
+      summary: List knowledge documents
+      operationId: listKnowledgeDocuments
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Document list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KnowledgeDocumentListResponse'
+    post:
+      summary: Create knowledge document and indexing task
+      operationId: createKnowledgeDocument
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/KnowledgeDocumentCreateRequest'
+      responses:
+        '200':
+          description: Created document and task
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KnowledgeDocumentCreateResponse'
+
+  /kb/tasks/{taskId}:
+    get:
+      summary: Get knowledge indexing task
+      operationId: getKnowledgeTask
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/TaskIdPath'
+      responses:
+        '200':
+          description: Task status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KnowledgeTaskStatus'
+
+  /kb/retrieve:
+    post:
+      summary: Retrieve knowledge snippets
+      operationId: retrieveKnowledge
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/KnowledgeRetrieveRequest'
+      responses:
+        '200':
+          description: Retrieval result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KnowledgeRetrieveResponse'
+
+  /kb/documents/{docId}:
+    delete:
+      summary: Delete knowledge document
+      operationId: deleteKnowledgeDocument
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/DocIdPath'
+      responses:
+        '200':
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BooleanOkResponse'
+
+  /skills:
+    get:
+      summary: List skills and prompt block
+      operationId: listSkills
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Skills with prompt block
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillListResponse'
+
+  /skills/reload:
+    post:
+      summary: Reload skills
+      operationId: reloadSkills
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Reloaded skills
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillReloadResponse'
+
+  /skills/import:
+    post:
+      summary: Import skill from zip
+      operationId: importSkill
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SkillImportRequest'
+      responses:
+        '200':
+          description: Imported skill
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillDescriptor'
+
+  /skills/{skillId}/enable:
+    post:
+      summary: Enable skill
+      operationId: enableSkill
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/SkillIdPath'
+      responses:
+        '200':
+          description: Updated skill
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillDescriptor'
+
+  /skills/{skillId}/disable:
+    post:
+      summary: Disable skill
+      operationId: disableSkill
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/SkillIdPath'
+      responses:
+        '200':
+          description: Updated skill
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillDescriptor'
+
+  /skills/{skillId}/download:
+    get:
+      summary: Get skill zip path
+      operationId: getSkillDownloadPath
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/SkillIdPath'
+      responses:
+        '200':
+          description: Download path
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillDownloadResponse'
+
+  /skills/{skillId}:
+    delete:
+      summary: Delete skill
+      operationId: deleteSkill
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/SkillIdPath'
+      responses:
+        '200':
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BooleanOkResponse'
+
   /plugins:
     get:
       summary: List plugins and status
@@ -128,6 +692,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PluginListResponse'
+
   /plugins/import/local:
     post:
       summary: Import plugin from local path
@@ -147,6 +712,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PluginItem'
+
   /plugins/import/git:
     post:
       summary: Import plugin from git
@@ -166,12 +732,116 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PluginItem'
+
+  /plugins/{pluginId}/enable:
+    post:
+      summary: Enable plugin
+      operationId: enablePlugin
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PluginIdPath'
+      responses:
+        '200':
+          description: Updated plugin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PluginItem'
+
+  /plugins/{pluginId}/disable:
+    post:
+      summary: Disable plugin
+      operationId: disablePlugin
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PluginIdPath'
+      responses:
+        '200':
+          description: Updated plugin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PluginItem'
+
+  /plugins/{pluginId}/reload:
+    post:
+      summary: Reload plugin
+      operationId: reloadPlugin
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PluginIdPath'
+      responses:
+        '200':
+          description: Updated plugin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PluginItem'
+
+  /plugins/{pluginId}:
+    delete:
+      summary: Uninstall plugin
+      operationId: deletePlugin
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PluginIdPath'
+      responses:
+        '200':
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BooleanOkResponse'
+
 components:
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: API Key
+
+  parameters:
+    ToolNamePath:
+      in: path
+      name: toolName
+      required: true
+      schema:
+        type: string
+    PluginIdPath:
+      in: path
+      name: pluginId
+      required: true
+      schema:
+        type: string
+    SkillIdPath:
+      in: path
+      name: skillId
+      required: true
+      schema:
+        type: string
+    JobIdPath:
+      in: path
+      name: jobId
+      required: true
+      schema:
+        type: string
+    DocIdPath:
+      in: path
+      name: docId
+      required: true
+      schema:
+        type: string
+    TaskIdPath:
+      in: path
+      name: taskId
+      required: true
+      schema:
+        type: string
+
   schemas:
     ErrorEnvelope:
       type: object
@@ -199,6 +869,15 @@ components:
               additionalProperties: true
             requestId:
               type: string
+
+    BooleanOkResponse:
+      type: object
+      required: [ok]
+      properties:
+        ok:
+          type: boolean
+          const: true
+
     HealthzResponse:
       type: object
       required: [ok]
@@ -206,6 +885,7 @@ components:
         ok:
           type: boolean
           const: true
+
     ReadyzResponse:
       type: object
       required: [ok, provider]
@@ -215,6 +895,7 @@ components:
         provider:
           type: string
           enum: [dify]
+
     MessagePart:
       oneOf:
         - type: object
@@ -230,7 +911,19 @@ components:
           properties:
             type:
               type: string
-              enum: [image, file, video, record]
+              const: image
+            path:
+              type: string
+            url:
+              type: string
+            attachmentId:
+              type: string
+        - type: object
+          required: [type]
+          properties:
+            type:
+              type: string
+              const: file
             path:
               type: string
             url:
@@ -238,6 +931,28 @@ components:
             attachmentId:
               type: string
             filename:
+              type: string
+        - type: object
+          required: [type]
+          properties:
+            type:
+              type: string
+              const: video
+            path:
+              type: string
+            url:
+              type: string
+            attachmentId:
+              type: string
+        - type: object
+          required: [type]
+          properties:
+            type:
+              type: string
+              const: record
+            path:
+              type: string
+            url:
               type: string
         - type: object
           required: [type, messageId]
@@ -249,6 +964,7 @@ components:
               oneOf:
                 - type: string
                 - type: number
+
     RuntimeChatRequest:
       type: object
       required: [message]
@@ -270,6 +986,7 @@ components:
         metadata:
           type: object
           additionalProperties: true
+
     RuntimeSessionItem:
       type: object
       required: [sessionId, displayName, createdAt, updatedAt]
@@ -284,6 +1001,7 @@ components:
         updatedAt:
           type: string
           format: date-time
+
     RuntimeSessionsResponse:
       type: object
       required: [items, total, page, pageSize]
@@ -298,6 +1016,7 @@ components:
           type: integer
         pageSize:
           type: integer
+
     DifyConfig:
       type: object
       required:
@@ -328,6 +1047,7 @@ components:
         variables:
           type: object
           additionalProperties: true
+
     DifyConfigMaskedView:
       allOf:
         - $ref: '#/components/schemas/DifyConfig'
@@ -340,6 +1060,23 @@ components:
               properties:
                 difyApiKey:
                   type: string
+
+    PluginImportLocalRequest:
+      type: object
+      required: [path]
+      properties:
+        path:
+          type: string
+
+    PluginImportGitRequest:
+      type: object
+      required: [repoUrl]
+      properties:
+        repoUrl:
+          type: string
+        ref:
+          type: string
+
     PluginItem:
       type: object
       required: [pluginId, name, version, source, status, error]
@@ -359,6 +1096,7 @@ components:
         error:
           type: string
           nullable: true
+
     PluginListResponse:
       type: object
       required: [items]
@@ -367,17 +1105,437 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/PluginItem'
-    PluginImportLocalRequest:
+
+    ToolSchemaField:
+      type: object
+      required: [type]
+      properties:
+        type:
+          type: string
+          enum: [string, number, boolean, object, array]
+        required:
+          type: boolean
+        description:
+          type: string
+
+    ToolItem:
+      type: object
+      required: [toolName, description, enabled, schema, source]
+      properties:
+        toolName:
+          type: string
+        description:
+          type: string
+        enabled:
+          type: boolean
+        schema:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/ToolSchemaField'
+        source:
+          type: string
+          enum: [builtin, mcp, plugin]
+
+    ToolListResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ToolItem'
+
+    ToolExecuteRequest:
+      type: object
+      required: [toolName, arguments]
+      properties:
+        toolName:
+          type: string
+        arguments:
+          type: object
+          additionalProperties: true
+        sessionId:
+          type: string
+
+    ToolExecuteResponse:
+      type: object
+      required: [ok]
+      properties:
+        ok:
+          type: boolean
+        output: {}
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+
+    McpServerConfig:
+      type: object
+      required: [name, enabled, transport]
+      properties:
+        name:
+          type: string
+        enabled:
+          type: boolean
+        transport:
+          type: string
+          enum: [stdio, http, sse]
+        command:
+          type: string
+        args:
+          type: array
+          items:
+            type: string
+        url:
+          type: string
+          format: uri
+        timeoutSec:
+          type: integer
+          minimum: 1
+
+    McpServerNameRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+
+    McpServerRuntimeState:
+      type: object
+      required: [name, enabled, healthy]
+      properties:
+        name:
+          type: string
+        enabled:
+          type: boolean
+        healthy:
+          type: boolean
+        lastCheckAt:
+          type: string
+          format: date-time
+        lastError:
+          type: string
+
+    McpServerListItem:
+      allOf:
+        - $ref: '#/components/schemas/McpServerConfig'
+        - type: object
+          required: [runtime]
+          properties:
+            runtime:
+              $ref: '#/components/schemas/McpServerRuntimeState'
+
+    McpServerListResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/McpServerListItem'
+
+    McpServerTestResponse:
+      type: object
+      required: [ok]
+      properties:
+        ok:
+          type: boolean
+        error:
+          type: string
+
+    CapabilityState:
+      type: object
+      required: [enabled, healthy]
+      properties:
+        enabled:
+          type: boolean
+        healthy:
+          type: boolean
+        lastCheckAt:
+          type: string
+          format: date-time
+        lastError:
+          type: string
+
+    CapabilityStatusResponse:
+      type: object
+      required: [dify, plugins, skills, mcp, search, knowledge, sandbox]
+      properties:
+        dify:
+          $ref: '#/components/schemas/CapabilityState'
+        plugins:
+          $ref: '#/components/schemas/CapabilityState'
+        skills:
+          $ref: '#/components/schemas/CapabilityState'
+        mcp:
+          $ref: '#/components/schemas/CapabilityState'
+        search:
+          $ref: '#/components/schemas/CapabilityState'
+        knowledge:
+          $ref: '#/components/schemas/CapabilityState'
+        sandbox:
+          $ref: '#/components/schemas/CapabilityState'
+
+    ProactiveJob:
+      type: object
+      required: [jobId, name, sessionId, prompt, runOnce, enabled, status, updatedAt]
+      properties:
+        jobId:
+          type: string
+        name:
+          type: string
+        sessionId:
+          type: string
+        prompt:
+          type: string
+        cronExpression:
+          type: string
+        runOnce:
+          type: boolean
+        runAt:
+          type: string
+          format: date-time
+        timezone:
+          type: string
+        enabled:
+          type: boolean
+        status:
+          type: string
+          enum: [pending, running, succeeded, failed, cancelled]
+        updatedAt:
+          type: string
+          format: date-time
+        lastRunAt:
+          type: string
+          format: date-time
+        lastError:
+          type: string
+
+    ProactiveJobCreateRequest:
+      type: object
+      required: [name, sessionId, prompt]
+      properties:
+        name:
+          type: string
+        sessionId:
+          type: string
+        prompt:
+          type: string
+        cronExpression:
+          type: string
+        runOnce:
+          type: boolean
+        runAt:
+          type: string
+          format: date-time
+        timezone:
+          type: string
+        enabled:
+          type: boolean
+
+    ProactiveJobListResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProactiveJob'
+
+    KnowledgeDocument:
+      type: object
+      required: [docId, title, content, createdAt]
+      properties:
+        docId:
+          type: string
+        title:
+          type: string
+        content:
+          type: string
+        source:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    KnowledgeDocumentListResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/KnowledgeDocument'
+
+    KnowledgeDocumentCreateRequest:
+      type: object
+      required: [title, content]
+      properties:
+        title:
+          type: string
+        content:
+          type: string
+        source:
+          type: string
+
+    KnowledgeTaskStatus:
+      type: object
+      required: [taskId, status, createdAt, updatedAt]
+      properties:
+        taskId:
+          type: string
+        status:
+          type: string
+          enum: [pending, processing, completed, failed]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        error:
+          type: string
+
+    KnowledgeDocumentCreateResponse:
+      type: object
+      required: [document, task]
+      properties:
+        document:
+          $ref: '#/components/schemas/KnowledgeDocument'
+        task:
+          $ref: '#/components/schemas/KnowledgeTaskStatus'
+
+    KnowledgeRetrieveRequest:
+      type: object
+      required: [query]
+      properties:
+        query:
+          type: string
+        topK:
+          type: integer
+          minimum: 1
+          maximum: 20
+          default: 5
+
+    KnowledgeRetrieveItem:
+      type: object
+      required: [docId, title, snippet, score]
+      properties:
+        docId:
+          type: string
+        title:
+          type: string
+        snippet:
+          type: string
+        score:
+          type: number
+        citation:
+          type: string
+
+    KnowledgeRetrieveResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/KnowledgeRetrieveItem'
+
+    SkillDescriptor:
+      type: object
+      required: [skillId, name, scope, enabled]
+      properties:
+        skillId:
+          type: string
+        name:
+          type: string
+        scope:
+          type: string
+          enum: [local_only, sandbox_only, both]
+        description:
+          type: string
+        enabled:
+          type: boolean
+
+    SkillImportRequest:
+      type: object
+      required: [zipPath]
+      properties:
+        zipPath:
+          type: string
+
+    SkillListResponse:
+      type: object
+      required: [items, promptBlock]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/SkillDescriptor'
+        promptBlock:
+          type: string
+
+    SkillReloadResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/SkillDescriptor'
+
+    SkillDownloadResponse:
       type: object
       required: [path]
       properties:
         path:
           type: string
-    PluginImportGitRequest:
+
+    SubagentConfigAgent:
       type: object
-      required: [repoUrl]
+      required: [subagentId, name, enabled, tools]
       properties:
-        repoUrl:
+        subagentId:
           type: string
-        ref:
+        name:
           type: string
+        enabled:
+          type: boolean
+        providerId:
+          type: string
+        systemPrompt:
+          type: string
+        publicDescription:
+          type: string
+        tools:
+          type: array
+          items:
+            type: string
+
+    SubagentConfig:
+      type: object
+      required: [mainEnable, removeMainDuplicateTools, agents]
+      properties:
+        mainEnable:
+          type: boolean
+        removeMainDuplicateTools:
+          type: boolean
+        routerSystemPrompt:
+          type: string
+        agents:
+          type: array
+          items:
+            $ref: '#/components/schemas/SubagentConfigAgent'
+
+    SubagentAvailableToolsResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ToolItem'
