@@ -48,4 +48,46 @@ describe('ProactiveScheduler', () => {
     await scheduler.stop();
     timeoutTimers.forEach((timer) => clearTimeout(timer));
   });
+
+  it('skips duplicate concurrent trigger for the same recurring job', async () => {
+    const repositories = createInMemoryRepositories();
+    const manager = new ProactiveManager(repositories.proactive);
+    await manager.createJob({
+      name: 'job-recurring',
+      sessionId: 'sess_1',
+      prompt: 'hello',
+      cronExpression: '*/1 * * * * *'
+    });
+
+    let runCount = 0;
+    let resolveRun: (() => void) | undefined;
+    const onRunGate = new Promise<void>((resolve) => {
+      resolveRun = resolve;
+    });
+
+    const scheduler = new ProactiveScheduler(manager, {
+      onRun: async () => {
+        runCount += 1;
+        await onRunGate;
+      },
+      setIntervalFn: (callback) => {
+        callback();
+        callback();
+        return setInterval(() => undefined, 10_000);
+      },
+      clearIntervalFn: (timer) => clearInterval(timer),
+      setTimeoutFn: (callback) => setTimeout(callback, 0),
+      clearTimeoutFn: (timer) => clearTimeout(timer)
+    });
+
+    await scheduler.start();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(runCount).toBe(1);
+
+    if (resolveRun) {
+      resolveRun();
+    }
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await scheduler.stop();
+  });
 });

@@ -38,6 +38,7 @@ export class ProactiveScheduler {
   private readonly setIntervalFn: (callback: () => void, ms: number) => NodeJS.Timeout;
   private readonly clearIntervalFn: (timer: NodeJS.Timeout) => void;
   private readonly timers = new Map<string, NodeJS.Timeout>();
+  private readonly runningJobs = new Set<string>();
   private started = false;
 
   constructor(
@@ -116,15 +117,21 @@ export class ProactiveScheduler {
   }
 
   private async executeJob(jobId: string, runOnce: boolean): Promise<void> {
-    const job = await this.manager.getJob(jobId);
-    if (!job || !job.enabled) {
-      this.unscheduleJob(jobId);
+    if (this.runningJobs.has(jobId)) {
+      this.options.logger?.info({ jobId }, 'proactive_job_skipped_duplicate_trigger');
       return;
     }
 
-    await this.manager.updateJobStatus(jobId, { status: 'running', lastError: undefined });
-
+    this.runningJobs.add(jobId);
     try {
+      const job = await this.manager.getJob(jobId);
+      if (!job || !job.enabled) {
+        this.unscheduleJob(jobId);
+        return;
+      }
+
+      await this.manager.updateJobStatus(jobId, { status: 'running', lastError: undefined });
+
       await this.options.onRun(job);
 
       await this.manager.updateJobStatus(jobId, {
@@ -146,6 +153,7 @@ export class ProactiveScheduler {
         'proactive_job_failed'
       );
     } finally {
+      this.runningJobs.delete(jobId);
       if (runOnce) {
         this.unscheduleJob(jobId);
       }

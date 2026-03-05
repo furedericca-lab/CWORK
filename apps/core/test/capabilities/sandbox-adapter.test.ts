@@ -18,4 +18,22 @@ describe('SandboxAdapter', () => {
     const result = await execTool.handler({ command: 'echo hello_sandbox' }, { requestId: 'req_1' });
     expect(result).toMatchObject({ stdout: expect.stringContaining('hello_sandbox') });
   });
+
+  it('emits audit payload for sandbox execution', async () => {
+    const audits: Array<{ action: string; result: string }> = [];
+    const adapter = new SandboxAdapter({
+      mode: 'sandbox',
+      onAudit: (payload) => {
+        audits.push({ action: payload.action, result: payload.result });
+      }
+    });
+
+    const execTool = adapter.buildTools().find((item) => item.meta.toolName === 'sandbox.exec');
+    if (!execTool) {
+      throw new Error('sandbox.exec tool missing');
+    }
+
+    await execTool.handler({ command: 'echo audit' }, { requestId: 'req_2' });
+    expect(audits).toContainEqual({ action: 'sandbox.exec', result: 'success' });
+  });
 });

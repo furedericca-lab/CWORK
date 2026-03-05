@@ -75,6 +75,14 @@ export class ProactiveManager {
     const runOnce = input.runOnce ?? !input.cronExpression;
     const enabled = input.enabled ?? true;
 
+    if (input.timezone) {
+      try {
+        new Intl.DateTimeFormat('en-US', { timeZone: input.timezone }).format(new Date());
+      } catch {
+        throw new AppError(ERROR_CODE.VALIDATION_ERROR, `Invalid timezone: ${input.timezone}`);
+      }
+    }
+
     if (!runOnce && !input.cronExpression) {
       throw new AppError(ERROR_CODE.VALIDATION_ERROR, 'Recurring proactive job requires cronExpression');
     }
@@ -91,7 +99,8 @@ export class ProactiveManager {
     return {
       ...input,
       runOnce,
-      enabled
+      enabled,
+      ...(input.cronExpression ? { timezone: input.timezone ?? 'UTC' } : {})
     };
   }
 }

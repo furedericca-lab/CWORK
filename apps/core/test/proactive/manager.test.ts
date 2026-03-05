@@ -22,6 +22,17 @@ describe('ProactiveManager', () => {
       cronExpression: '*/5 * * * * *'
     });
     expect(recurring.runOnce).toBe(false);
+    expect(recurring.timezone).toBe('UTC');
+
+    await expect(
+      manager.createJob({
+        name: 'tz-bad',
+        sessionId: 'sess_1',
+        prompt: 'do cron',
+        cronExpression: '*/5 * * * * *',
+        timezone: 'Mars/Phobos'
+      })
+    ).rejects.toThrow(/Invalid timezone/);
 
     const oneShot = await manager.createJob({
       name: 'one-shot',

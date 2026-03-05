@@ -138,8 +138,12 @@ Merged at request time in this order:
 ## 7. Proactive Agent Design
 1. Scheduler supports cron-based jobs.
 2. Job execution re-enters pipeline with session context.
-3. Job lifecycle states: `pending`, `running`, `succeeded`, `failed`, `cancelled`.
-4. Job executions are auditable.
+3. Timezone handling is deterministic:
+- validate IANA timezone names.
+- default timezone is `UTC` when omitted.
+4. Duplicate recurring triggers are guarded by per-job run lock semantics.
+5. Job lifecycle states: `pending`, `running`, `succeeded`, `failed`, `cancelled`.
+6. Job executions are auditable.
 
 ## 8. Capability Adapters
 
@@ -189,9 +193,11 @@ Merged at request time in this order:
 
 ## 11. Observability and Operations
 1. Structured logs with `requestId`, `sessionId`, `component`.
-2. Capability health endpoints.
-3. Readiness checks for Dify config and capability wiring.
-4. Minimal metrics:
+2. Runtime trace logs include explicit `subagent_handoff` and `capability_event` records.
+3. Scheduler guard events include duplicate trigger skip logs for recurring jobs.
+4. Capability health endpoints.
+5. Readiness checks for Dify config and capability wiring.
+6. Minimal metrics:
 - request count
 - request latency
 - tool call count

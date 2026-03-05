@@ -172,7 +172,10 @@ export async function buildApp(options: BuildAppOptions = {}) {
         },
         {
           toolExecutor,
-          state: { subagentOrchestrator }
+          state: {
+            subagentOrchestrator,
+            runtimeLogger: app.log
+          }
         }
       );
     },
@@ -272,7 +275,10 @@ export async function buildApp(options: BuildAppOptions = {}) {
       },
       {
         toolExecutor,
-        state: { subagentOrchestrator }
+        state: {
+          subagentOrchestrator,
+          runtimeLogger: app.log
+        }
       }
     );
 

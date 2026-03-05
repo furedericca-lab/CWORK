@@ -218,6 +218,24 @@ Excluded:
 1. `phase-4/orchestration-capabilities`
 2. Merge gate requires proactive/subagent/capability integration tests passing.
 
+## 10. Closure Record (2026-03-05)
+Exit criteria validation:
+1. SubAgent orchestration is config-driven and traceable.
+- Verified by `PUT /subagents`, `GET /subagents/available-tools`, runtime handoff path tests, and `subagent_handoff` logs.
+2. Proactive jobs execute reliably and re-enter pipeline.
+- Verified by proactive scheduler restore tests and app integration tests for immediate-run session creation (`sess_proactive_run`).
+- Hardening completed: timezone validation, deterministic default timezone (`UTC`), duplicate trigger guard for recurring jobs.
+3. MCP/search/knowledge/sandbox are callable as tools.
+- Verified by tool execution tests and app integration tests for `web.search`, `kb.retrieve`, and `sandbox.exec` (sandbox mode).
+4. Capability status and audit logging are in place.
+- Verified by `GET /capabilities/status` tests and audit assertions for proactive create/delete, plugin import, and sandbox execution.
+
+Verification commands:
+1. `pnpm -r lint`
+2. `pnpm -r typecheck`
+3. `pnpm -r test`
+4. `pnpm -r build`
+
 ---
-Status: In Progress.
+Status: Completed.
 Date: 2026-03-05

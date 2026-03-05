@@ -275,6 +275,32 @@ describe('core api routes', () => {
     expect(kbRetrieve.statusCode).toBe(200);
     expect(Array.isArray(kbRetrieve.json().items)).toBe(true);
 
+    const searchToolExec = await app.inject({
+      method: 'POST',
+      url: '/api/v1/tools/execute',
+      headers: authHeaders,
+      payload: {
+        toolName: 'web.search',
+        arguments: { query: 'cwork architecture' },
+        sessionId: 'sess_handoff'
+      }
+    });
+    expect(searchToolExec.statusCode).toBe(200);
+    expect(searchToolExec.json()).toMatchObject({ ok: true });
+
+    const kbToolExec = await app.inject({
+      method: 'POST',
+      url: '/api/v1/tools/execute',
+      headers: authHeaders,
+      payload: {
+        toolName: 'kb.retrieve',
+        arguments: { query: 'Dify provider', topK: 3 },
+        sessionId: 'sess_handoff'
+      }
+    });
+    expect(kbToolExec.statusCode).toBe(200);
+    expect(kbToolExec.json()).toMatchObject({ ok: true });
+
     const proactiveCreate = await app.inject({
       method: 'POST',
       url: '/api/v1/proactive/jobs',
@@ -288,6 +314,44 @@ describe('core api routes', () => {
     });
     expect(proactiveCreate.statusCode).toBe(200);
     const jobId = proactiveCreate.json().jobId as string;
+
+    const proactiveImmediate = await app.inject({
+      method: 'POST',
+      url: '/api/v1/proactive/jobs',
+      headers: authHeaders,
+      payload: {
+        name: 'immediate',
+        sessionId: 'sess_proactive_run',
+        prompt: 'proactive run now',
+        runAt: new Date(Date.now() + 10).toISOString()
+      }
+    });
+    expect(proactiveImmediate.statusCode).toBe(200);
+    await new Promise((resolve) => setTimeout(resolve, 80));
+
+    const sessionsAfterProactive = await app.inject({
+      method: 'GET',
+      url: '/api/v1/runtime/sessions',
+      headers: authHeaders
+    });
+    expect(sessionsAfterProactive.statusCode).toBe(200);
+    expect(sessionsAfterProactive.json().items.map((item: { sessionId: string }) => item.sessionId)).toContain(
+      'sess_proactive_run'
+    );
+
+    const proactiveInvalidTimezone = await app.inject({
+      method: 'POST',
+      url: '/api/v1/proactive/jobs',
+      headers: authHeaders,
+      payload: {
+        name: 'bad-tz',
+        sessionId: 'sess_1',
+        prompt: 'hello',
+        cronExpression: '*/10 * * * * *',
+        timezone: 'Mars/Phobos'
+      }
+    });
+    expect(proactiveInvalidTimezone.statusCode).toBe(400);
 
     const proactiveList = await app.inject({
       method: 'GET',
@@ -324,6 +388,48 @@ describe('core api routes', () => {
     expect(kbDelete.statusCode).toBe(200);
 
     await app.close();
+  });
+
+  it('exposes sandbox.exec tool only when runtime mode is sandbox', async () => {
+    const previous = process.env.CWORK_RUNTIME_MODE;
+    process.env.CWORK_RUNTIME_MODE = 'sandbox';
+
+    const app = await buildApp({ difyApiClient: createMockDifyApiClient() });
+    try {
+      const listRes = await app.inject({
+        method: 'GET',
+        url: '/api/v1/tools',
+        headers: authHeaders
+      });
+      expect(listRes.statusCode).toBe(200);
+      expect(listRes.json().items.map((item: { toolName: string }) => item.toolName)).toContain('sandbox.exec');
+
+      const execRes = await app.inject({
+        method: 'POST',
+        url: '/api/v1/tools/execute',
+        headers: authHeaders,
+        payload: {
+          toolName: 'sandbox.exec',
+          arguments: { command: 'echo sandbox_ok' },
+          sessionId: 'sess_sandbox'
+        }
+      });
+
+      expect(execRes.statusCode).toBe(200);
+      expect(execRes.json()).toMatchObject({
+        ok: true,
+        output: {
+          stdout: expect.stringContaining('sandbox_ok')
+        }
+      });
+    } finally {
+      await app.close();
+      if (previous === undefined) {
+        delete process.env.CWORK_RUNTIME_MODE;
+      } else {
+        process.env.CWORK_RUNTIME_MODE = previous;
+      }
+    }
   });
 
   it('supports tools and mcp management endpoints', async () => {

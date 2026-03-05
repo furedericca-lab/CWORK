@@ -409,6 +409,11 @@ Request body:
 }
 ```
 
+Behavior notes:
+- `timezone` is optional and defaults to `UTC`.
+- invalid timezone names return `VALIDATION_ERROR`.
+- recurring job triggers are idempotent per job instance; overlapping triggers are skipped.
+
 ### 9.3 DELETE `/proactive/jobs/{jobId}`
 Delete a proactive job.
 

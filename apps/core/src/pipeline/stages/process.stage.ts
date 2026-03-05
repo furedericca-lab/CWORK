@@ -31,11 +31,28 @@ export class ProcessStage implements PipelineStage {
   async *run(ctx: RuntimePipelineContext): AsyncGenerator<PipelineSignal, void, void> {
     const toolExecutor = (ctx.state.toolExecutor as ToolExecutor | undefined) ?? undefined;
     const subagentOrchestrator = (ctx.state.subagentOrchestrator as SubagentOrchestrator | undefined) ?? undefined;
+    const runtimeLogger =
+      (ctx.state.runtimeLogger as
+        | {
+            info(payload: Record<string, unknown>, message: string): void;
+            error(payload: Record<string, unknown>, message: string): void;
+          }
+        | undefined) ?? undefined;
 
     if (subagentOrchestrator) {
       const handoff = await subagentOrchestrator.resolveHandoff(ctx.request, ctx.normalizedMessage);
       if (handoff) {
         subagentOrchestrator.applyHandoffContext(ctx.request, handoff);
+        runtimeLogger?.info(
+          {
+            requestId: ctx.requestId,
+            sessionId: ctx.sessionId,
+            from: handoff.from,
+            to: handoff.to,
+            reason: handoff.reason
+          },
+          'subagent_handoff'
+        );
         yield {
           emit: {
             event: 'handoff',
@@ -67,6 +84,17 @@ export class ProcessStage implements PipelineStage {
             onStart: (payload) => {
               trace.push({ emit: { event: 'tool_call_start', data: payload } });
               if (capabilityType) {
+                runtimeLogger?.info(
+                  {
+                    requestId: ctx.requestId,
+                    sessionId: ctx.sessionId,
+                    type: capabilityType,
+                    status: 'start',
+                    toolName: payload.toolName,
+                    callId: payload.callId
+                  },
+                  'capability_event'
+                );
                 trace.push({
                   emit: {
                     event: 'capability',
@@ -82,6 +110,17 @@ export class ProcessStage implements PipelineStage {
             onEnd: (payload) => {
               trace.push({ emit: { event: 'tool_call_end', data: payload } });
               if (capabilityType) {
+                runtimeLogger?.info(
+                  {
+                    requestId: ctx.requestId,
+                    sessionId: ctx.sessionId,
+                    type: capabilityType,
+                    status: payload.ok ? 'finish' : 'error',
+                    toolName: payload.toolName,
+                    callId: payload.callId
+                  },
+                  'capability_event'
+                );
                 trace.push({
                   emit: {
                     event: 'capability',
@@ -107,6 +146,15 @@ export class ProcessStage implements PipelineStage {
           if (toolName.startsWith('handoff.')) {
             const output = result.output as { to?: unknown; from?: unknown; reason?: unknown } | undefined;
             if (typeof output?.to === 'string') {
+              runtimeLogger?.info(
+                {
+                  requestId: ctx.requestId,
+                  sessionId: ctx.sessionId,
+                  from: typeof output.from === 'string' ? output.from : 'main',
+                  to: output.to
+                },
+                'subagent_handoff'
+              );
               yield {
                 emit: {
                   event: 'handoff',

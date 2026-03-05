@@ -14,7 +14,7 @@ This document is the single checklist hub for:
 4. Mark a phase as `Completed` only after all exit criteria are verified.
 
 ## Global Status
-- Overall Program Status: `In Progress (Phase 1-3 Completed, Phase 4 In Progress)`
+- Overall Program Status: `In Progress (Phase 1-4 Completed, Phase 5 Not Started)`
 - Last Updated: `2026-03-05`
 - Owner: `Codex + User`
 
@@ -31,7 +31,7 @@ This document is the single checklist hub for:
 | 1 | Foundation and Contract Freeze | Completed | 100% | Healthy | 0 |
 | 2 | Core Runtime and Dify Provider | Completed | 100% | Healthy | 0 |
 | 3 | Tools, Skills, and Plugin Runtime | Completed | 100% | Healthy | 0 |
-| 4 | SubAgent, Proactive, Capability Adapters | In Progress | 85% | Healthy | 0 |
+| 4 | SubAgent, Proactive, Capability Adapters | Completed | 100% | Healthy | 0 |
 | 5 | WebUI Completion, Quality, and Release | Not Started | 0% | Unknown | 0 |
 
 ## Phase 1 Checklist
@@ -150,14 +150,14 @@ This document is the single checklist hub for:
 
 ## Phase 4 Checklist
 - Phase Document: [task-plan-phase-4-subagent-proactive-capabilities.md](/root/code/CWORK/docs/task-plans/task-plan-phase-4-subagent-proactive-capabilities.md)
-- Phase Status: `In Progress`
-- Completion: `85%`
+- Phase Status: `Completed`
+- Completion: `100%`
 - Implementation Health: `Healthy`
 
 ### Completion Checklist
-- [ ] All Phase 4 tasks completed.
+- [x] All Phase 4 tasks completed.
 - [x] All Phase 4 verification commands passed.
-- [ ] Phase 4 exit criteria validated.
+- [x] Phase 4 exit criteria validated.
 
 ### Implementation Progress Notes
 - Added SubAgent config model + normalization (`enable` backward mapping) and orchestrator-driven handoff tool lifecycle.
@@ -171,11 +171,21 @@ This document is the single checklist hub for:
 - Added capability status aggregation endpoint: `GET /capabilities/status`.
 - Added audit logger and wired high-risk operation audit trails (`plugin import`, `proactive create/delete`, `sandbox.exec`).
 - Expanded shared contracts/schemas for phase-4 entities (subagent config, proactive job, capability status, knowledge types).
+- Hardened proactive scheduling:
+  - timezone validation and deterministic default `UTC`
+  - duplicate concurrent trigger guard per recurring job
+- Hardened observability:
+  - explicit `subagent_handoff` log event in process stage
+  - explicit `capability_event` start/finish/error traces in process stage
+- Extended integration coverage for Phase 4 exits:
+  - proactive immediate-run pipeline re-entry verification
+  - `/tools/execute` coverage for `web.search` and `kb.retrieve`
+  - sandbox mode tool registration and execution coverage
 
 ### Evidence (Commands / CI / PRs)
 - `pnpm -r lint` (passed)
 - `pnpm -r typecheck` (passed)
-- `pnpm -r test` (passed; shared: 15 tests, core: 57 tests)
+- `pnpm -r test` (passed; shared: 15 tests, core: 60 tests)
 - `pnpm -r build` (passed)
 
 ### Issues and Blockers
@@ -183,6 +193,8 @@ This document is the single checklist hub for:
 
 ### Resolutions and Decisions
 - Implemented deterministic scheduler baseline with support for one-shot jobs and interval-style cron expressions (`*/N` seconds/minutes) for runtime safety in this phase.
+- Closed race window for recurring jobs by lock-first scheduling and duplicate-trigger skip behavior.
+- Enforced proactive timezone validation to reject invalid zone names deterministically.
 
 ## Phase 5 Checklist
 - Phase Document: [task-plan-phase-5-webui-quality-and-release.md](/root/code/CWORK/docs/task-plans/task-plan-phase-5-webui-quality-and-release.md)
