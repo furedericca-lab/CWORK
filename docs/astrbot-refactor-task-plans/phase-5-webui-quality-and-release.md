@@ -173,10 +173,7 @@ Excluded:
 - Component: Docs
 - Description: Complete developer and operator docs.
 - Output:
-  - `DEVELOPMENT.md`
-  - `OPERATIONS.md`
-  - `SECURITY.md`
-  - `TROUBLESHOOTING.md`
+  - consolidated runbook in `README.md` (development, operations, security, troubleshooting)
 - DoD:
   - docs cover setup, config, common failures, and recovery flows.
 - Verify:
@@ -255,7 +252,7 @@ Completed in this closure batch:
 1. P5-T010 Security Hardening Pass
 - Added `test/security/auth-coverage.test.ts` for protected endpoint coverage.
 - Added `test/security/redact.test.ts` for secret redaction verification.
-- Added `SECURITY.md` and root security gate command (`pnpm security:check`).
+- Added security runbook section in `README.md` and root security gate command (`pnpm security:check`).
 2. P5-T011 Full Test Matrix
 - Added segmented CI jobs in `.github/workflows/ci.yml`:
   - `lint`, `typecheck`, `test`, `build`, `e2e`, `security`.
@@ -271,9 +268,9 @@ Completed in this closure batch:
 - Added root command shortcuts: `start:core`, `preview:web`, `release:check`.
 - Added `.env.example`.
 5. P5-T014 Operations Documentation
-- Added `DEVELOPMENT.md`, `OPERATIONS.md`, `SECURITY.md`, `TROUBLESHOOTING.md`.
+- Added consolidated docs in `README.md` (development, operations, security, troubleshooting).
 6. P5-T015 Release Readiness Checklist
-- Added `RELEASE-CHECKLIST.md` with sign-off fields and evidence gates.
+- Added release checklist section in `README.md` with gates and evidence flow.
 
 Closure verification evidence:
 1. `pnpm -r lint`

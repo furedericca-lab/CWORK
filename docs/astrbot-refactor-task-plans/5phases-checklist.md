@@ -19,11 +19,11 @@ This document is the single checklist hub for:
 - Owner: `Codex + User`
 
 ## Phase Entry Links
-1. Phase 1: [task-plan-phase-1-foundation-and-contracts.md](/root/code/CWORK/docs/task-plans/task-plan-phase-1-foundation-and-contracts.md)
-2. Phase 2: [task-plan-phase-2-core-runtime-and-dify.md](/root/code/CWORK/docs/task-plans/task-plan-phase-2-core-runtime-and-dify.md)
-3. Phase 3: [task-plan-phase-3-tools-skills-plugin-runtime.md](/root/code/CWORK/docs/task-plans/task-plan-phase-3-tools-skills-plugin-runtime.md)
-4. Phase 4: [task-plan-phase-4-subagent-proactive-capabilities.md](/root/code/CWORK/docs/task-plans/task-plan-phase-4-subagent-proactive-capabilities.md)
-5. Phase 5: [task-plan-phase-5-webui-quality-and-release.md](/root/code/CWORK/docs/task-plans/task-plan-phase-5-webui-quality-and-release.md)
+1. Phase 1: [phase-1-foundation-and-contracts.md](/root/code/CWORK/docs/astrbot-refactor-task-plans/phase-1-foundation-and-contracts.md)
+2. Phase 2: [phase-2-core-runtime-and-dify.md](/root/code/CWORK/docs/astrbot-refactor-task-plans/phase-2-core-runtime-and-dify.md)
+3. Phase 3: [phase-3-tools-skills-plugin-runtime.md](/root/code/CWORK/docs/astrbot-refactor-task-plans/phase-3-tools-skills-plugin-runtime.md)
+4. Phase 4: [phase-4-subagent-proactive-capabilities.md](/root/code/CWORK/docs/astrbot-refactor-task-plans/phase-4-subagent-proactive-capabilities.md)
+5. Phase 5: [phase-5-webui-quality-and-release.md](/root/code/CWORK/docs/astrbot-refactor-task-plans/phase-5-webui-quality-and-release.md)
 
 ## Phase Summary Board
 | Phase | Name | Status | Completion | Implementation Health | Blocking Issues |
@@ -35,7 +35,7 @@ This document is the single checklist hub for:
 | 5 | WebUI Completion, Quality, and Release | Completed | 100% | Healthy | 0 |
 
 ## Phase 1 Checklist
-- Phase Document: [task-plan-phase-1-foundation-and-contracts.md](/root/code/CWORK/docs/task-plans/task-plan-phase-1-foundation-and-contracts.md)
+- Phase Document: [phase-1-foundation-and-contracts.md](/root/code/CWORK/docs/astrbot-refactor-task-plans/phase-1-foundation-and-contracts.md)
 - Phase Status: `Completed`
 - Completion: `100%`
 - Implementation Health: `Healthy`
@@ -69,7 +69,7 @@ This document is the single checklist hub for:
 - Resolved by deleting generated artifacts, keeping build output in `dist`, and retaining strict workspace verification commands.
 
 ## Phase 2 Checklist
-- Phase Document: [task-plan-phase-2-core-runtime-and-dify.md](/root/code/CWORK/docs/task-plans/task-plan-phase-2-core-runtime-and-dify.md)
+- Phase Document: [phase-2-core-runtime-and-dify.md](/root/code/CWORK/docs/astrbot-refactor-task-plans/phase-2-core-runtime-and-dify.md)
 - Phase Status: `Completed`
 - Completion: `100%`
 - Implementation Health: `Healthy`
@@ -113,7 +113,7 @@ This document is the single checklist hub for:
 - Added strict fallback handling for missing final pipeline result and workflow non-string outputs.
 
 ## Phase 3 Checklist
-- Phase Document: [task-plan-phase-3-tools-skills-plugin-runtime.md](/root/code/CWORK/docs/task-plans/task-plan-phase-3-tools-skills-plugin-runtime.md)
+- Phase Document: [phase-3-tools-skills-plugin-runtime.md](/root/code/CWORK/docs/astrbot-refactor-task-plans/phase-3-tools-skills-plugin-runtime.md)
 - Phase Status: `Completed`
 - Completion: `100%`
 - Implementation Health: `Healthy`
@@ -149,7 +149,7 @@ This document is the single checklist hub for:
 - Completed Phase 3 with additive APIs and hardening that do not expand out-of-scope provider/channel boundaries.
 
 ## Phase 4 Checklist
-- Phase Document: [task-plan-phase-4-subagent-proactive-capabilities.md](/root/code/CWORK/docs/task-plans/task-plan-phase-4-subagent-proactive-capabilities.md)
+- Phase Document: [phase-4-subagent-proactive-capabilities.md](/root/code/CWORK/docs/astrbot-refactor-task-plans/phase-4-subagent-proactive-capabilities.md)
 - Phase Status: `Completed`
 - Completion: `100%`
 - Implementation Health: `Healthy`
@@ -197,7 +197,7 @@ This document is the single checklist hub for:
 - Enforced proactive timezone validation to reject invalid zone names deterministically.
 
 ## Phase 5 Checklist
-- Phase Document: [task-plan-phase-5-webui-quality-and-release.md](/root/code/CWORK/docs/task-plans/task-plan-phase-5-webui-quality-and-release.md)
+- Phase Document: [phase-5-webui-quality-and-release.md](/root/code/CWORK/docs/astrbot-refactor-task-plans/phase-5-webui-quality-and-release.md)
 - Phase Status: `Completed`
 - Completion: `100%`
 - Implementation Health: `Healthy`
@@ -241,11 +241,12 @@ This document is the single checklist hub for:
     - `pnpm reliability:smoke`
   - Added release/deployment documentation set:
     - `.env.example`
-    - `DEVELOPMENT.md`
-    - `OPERATIONS.md`
-    - `SECURITY.md`
-    - `TROUBLESHOOTING.md`
-    - `RELEASE-CHECKLIST.md`
+    - consolidated `README.md` sections:
+      - development guide
+      - operations runbook
+      - security baseline
+      - troubleshooting
+      - release checklist
   - Added root release gate command: `pnpm release:check`
 
 ### Evidence (Commands / CI / PRs)

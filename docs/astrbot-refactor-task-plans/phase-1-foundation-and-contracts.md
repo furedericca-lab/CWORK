@@ -165,7 +165,7 @@ Excluded:
 - Component: Docs
 - Description: Keep docs and code contracts aligned with generated artifacts.
 - Output:
-  - update `docs/api-contracts.md` references
+  - update `docs/api-contracts-v1.md` references
   - add `packages/shared/README.md`
 - DoD:
   - contributors can regenerate contract artifacts with one command.
