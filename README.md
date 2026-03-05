@@ -1,4 +1,4 @@
-# easywork
+# CWORK
 
 A contract-first, Dify-only refactor baseline for an AstrBot-style runtime with two entry points:
 

@@ -8,13 +8,13 @@ void i18n.use(initReactI18next).init({
   resources: {
     en: {
       translation: {
-        title: 'Easywork Refactor Scaffold',
+        title: 'CWORK Refactor Scaffold',
         subtitle: 'Web and Core baseline is running.'
       }
     },
     zh: {
       translation: {
-        title: 'Easywork 重构脚手架',
+        title: 'CWORK 重构脚手架',
         subtitle: 'Web 与 Core 基础架构已启动。'
       }
     }

@@ -63,7 +63,7 @@ Excluded:
   - `packages/shared/src/schema/*`
   - `packages/shared/src/generated/*` placeholder
 - DoD:
-  - both core and web can import from `@easywork/shared`.
+  - both core and web can import from `@cwork/shared`.
 - Verify:
   - `pnpm -r build`
 
@@ -77,7 +77,7 @@ Excluded:
 - DoD:
   - generated output is deterministic and committed.
 - Verify:
-  - `pnpm --filter @easywork/shared gen:openapi`
+  - `pnpm --filter @cwork/shared gen:openapi`
 
 ### P1-T005 Runtime Validator Baseline (Zod)
 - Component: Backend/Frontend
@@ -90,7 +90,7 @@ Excluded:
 - DoD:
   - validator tests cover valid/invalid inputs.
 - Verify:
-  - `pnpm --filter @easywork/shared test`
+  - `pnpm --filter @cwork/shared test`
 
 ### P1-T006 Core Service Shell
 - Component: Backend
@@ -102,7 +102,7 @@ Excluded:
 - DoD:
   - service starts and returns health responses.
 - Verify:
-  - `pnpm --filter @easywork/core dev`
+  - `pnpm --filter @cwork/core dev`
   - `curl -s localhost:<PORT>/api/v1/healthz`
 
 ### P1-T007 Web App Shell
@@ -111,11 +111,11 @@ Excluded:
 - Output:
   - `apps/web/src/main.tsx`
   - basic route shell
-  - typed API client using `@easywork/shared`
+  - typed API client using `@cwork/shared`
 - DoD:
   - web app starts and displays backend health status.
 - Verify:
-  - `pnpm --filter @easywork/web dev`
+  - `pnpm --filter @cwork/web dev`
 
 ### P1-T008 API Security Middleware Skeleton
 - Component: Security
@@ -193,5 +193,5 @@ Excluded:
 2. Merge gate requires all Phase 1 verification commands passing.
 
 ---
-Status: Ready for execution.
+Status: Completed.
 Date: 2026-03-05

@@ -1,5 +1,5 @@
 {
-  "name": "@easywork/core",
+  "name": "@cwork/core",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -11,9 +11,10 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@easywork/shared": "workspace:*",
+    "@cwork/shared": "workspace:*",
     "@fastify/cors": "^11.1.0",
-    "fastify": "^5.6.1"
+    "fastify": "^5.6.1",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "tsx": "^4.20.6",

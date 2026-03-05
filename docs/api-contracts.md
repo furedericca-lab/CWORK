@@ -12,6 +12,11 @@ Scope alignment:
 - No messaging platform APIs.
 - API + WebUI are the only runtime entry points.
 
+Contract source-of-truth:
+- OpenAPI source: `packages/shared/openapi/openapi.yaml`
+- Generated artifact: `packages/shared/src/generated/openapi.ts`
+- Regeneration command: `pnpm --filter @cwork/shared gen:openapi`
+
 ## 2. Global Conventions
 
 ### 2.1 Base Path

@@ -1,5 +1,5 @@
 {
-  "name": "easywork",
+  "name": "cwork",
   "private": true,
   "version": "0.1.0",
   "packageManager": "pnpm@10.30.3",
@@ -8,13 +8,15 @@
     "build": "pnpm -r build",
     "test": "pnpm -r test",
     "lint": "pnpm -r lint",
-    "typecheck": "pnpm -r typecheck"
+    "typecheck": "pnpm -r typecheck",
+    "format:check": "prettier --check ."
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
     "@types/node": "^25.0.10",
     "eslint": "^9.39.2",
     "globals": "^17.1.0",
+    "prettier": "^3.6.2",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.53.1"
   }

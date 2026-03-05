@@ -1,0 +1,383 @@
+openapi: 3.1.0
+info:
+  title: CWORK API
+  version: 0.1.0
+  description: Contract-first API baseline for the AstrBot refactor.
+servers:
+  - url: /api/v1
+paths:
+  /healthz:
+    get:
+      summary: Service liveness check
+      operationId: getHealthz
+      responses:
+        '200':
+          description: Health state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthzResponse'
+  /readyz:
+    get:
+      summary: Service readiness check
+      operationId: getReadyz
+      responses:
+        '200':
+          description: Readiness state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadyzResponse'
+  /runtime/sessions:
+    get:
+      summary: List runtime sessions
+      operationId: listRuntimeSessions
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Runtime session list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RuntimeSessionsResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /runtime/chat:
+    post:
+      summary: Execute runtime chat request and stream results
+      operationId: postRuntimeChat
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuntimeChatRequest'
+      responses:
+        '200':
+          description: Server-Sent Events stream
+          content:
+            text/event-stream:
+              schema:
+                type: string
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /config/dify:
+    get:
+      summary: Get effective Dify config
+      operationId: getDifyConfig
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Effective Dify config with masked api key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DifyConfigMaskedView'
+    put:
+      summary: Update Dify config
+      operationId: putDifyConfig
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DifyConfig'
+      responses:
+        '200':
+          description: Updated Dify config
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DifyConfigMaskedView'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /plugins:
+    get:
+      summary: List plugins and status
+      operationId: listPlugins
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Plugin list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PluginListResponse'
+  /plugins/import/local:
+    post:
+      summary: Import plugin from local path
+      operationId: importPluginLocal
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PluginImportLocalRequest'
+      responses:
+        '200':
+          description: Imported plugin info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PluginItem'
+  /plugins/import/git:
+    post:
+      summary: Import plugin from git
+      operationId: importPluginGit
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PluginImportGitRequest'
+      responses:
+        '200':
+          description: Imported plugin info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PluginItem'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: API Key
+  schemas:
+    ErrorEnvelope:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message, requestId]
+          properties:
+            code:
+              type: string
+              enum:
+                - UNAUTHORIZED
+                - FORBIDDEN
+                - NOT_FOUND
+                - CONFLICT
+                - VALIDATION_ERROR
+                - TIMEOUT
+                - UPSTREAM_ERROR
+                - INTERNAL_ERROR
+            message:
+              type: string
+            details:
+              type: object
+              additionalProperties: true
+            requestId:
+              type: string
+    HealthzResponse:
+      type: object
+      required: [ok]
+      properties:
+        ok:
+          type: boolean
+          const: true
+    ReadyzResponse:
+      type: object
+      required: [ok, provider]
+      properties:
+        ok:
+          type: boolean
+        provider:
+          type: string
+          enum: [dify]
+    MessagePart:
+      oneOf:
+        - type: object
+          required: [type, text]
+          properties:
+            type:
+              type: string
+              const: plain
+            text:
+              type: string
+        - type: object
+          required: [type]
+          properties:
+            type:
+              type: string
+              enum: [image, file, video, record]
+            path:
+              type: string
+            url:
+              type: string
+            attachmentId:
+              type: string
+            filename:
+              type: string
+        - type: object
+          required: [type, messageId]
+          properties:
+            type:
+              type: string
+              const: reply
+            messageId:
+              oneOf:
+                - type: string
+                - type: number
+    RuntimeChatRequest:
+      type: object
+      required: [message]
+      properties:
+        sessionId:
+          type: string
+        message:
+          oneOf:
+            - type: string
+            - type: array
+              minItems: 1
+              items:
+                $ref: '#/components/schemas/MessagePart'
+        enableStreaming:
+          type: boolean
+          default: true
+        configId:
+          type: string
+        metadata:
+          type: object
+          additionalProperties: true
+    RuntimeSessionItem:
+      type: object
+      required: [sessionId, displayName, createdAt, updatedAt]
+      properties:
+        sessionId:
+          type: string
+        displayName:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    RuntimeSessionsResponse:
+      type: object
+      required: [items, total, page, pageSize]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/RuntimeSessionItem'
+        total:
+          type: integer
+        page:
+          type: integer
+        pageSize:
+          type: integer
+    DifyConfig:
+      type: object
+      required:
+        - providerId
+        - difyApiBase
+        - difyApiType
+        - difyWorkflowOutputKey
+        - difyQueryInputKey
+        - timeoutSec
+      properties:
+        providerId:
+          type: string
+        difyApiKey:
+          type: string
+        difyApiBase:
+          type: string
+          format: uri
+        difyApiType:
+          type: string
+          enum: [chat, agent, chatflow, workflow]
+        difyWorkflowOutputKey:
+          type: string
+        difyQueryInputKey:
+          type: string
+        timeoutSec:
+          type: integer
+          minimum: 1
+        variables:
+          type: object
+          additionalProperties: true
+    DifyConfigMaskedView:
+      allOf:
+        - $ref: '#/components/schemas/DifyConfig'
+        - type: object
+          required: [masked]
+          properties:
+            masked:
+              type: object
+              required: [difyApiKey]
+              properties:
+                difyApiKey:
+                  type: string
+    PluginItem:
+      type: object
+      required: [pluginId, name, version, source, status, error]
+      properties:
+        pluginId:
+          type: string
+        name:
+          type: string
+        version:
+          type: string
+        source:
+          type: string
+          enum: [local, git]
+        status:
+          type: string
+          enum: [enabled, disabled, error]
+        error:
+          type: string
+          nullable: true
+    PluginListResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PluginItem'
+    PluginImportLocalRequest:
+      type: object
+      required: [path]
+      properties:
+        path:
+          type: string
+    PluginImportGitRequest:
+      type: object
+      required: [repoUrl]
+      properties:
+        repoUrl:
+          type: string
+        ref:
+          type: string

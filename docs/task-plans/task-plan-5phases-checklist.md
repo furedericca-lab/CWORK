@@ -14,51 +14,62 @@ This document is the single checklist hub for:
 4. Mark a phase as `Completed` only after all exit criteria are verified.
 
 ## Global Status
-- Overall Program Status: `Not Started`
+- Overall Program Status: `In Progress (Phase 1 Completed)`
 - Last Updated: `2026-03-05`
-- Owner: `TBD`
+- Owner: `Codex + User`
 
 ## Phase Entry Links
-1. Phase 1: [task-plan-phase-1-foundation-and-contracts.md](/root/code/easywork/docs/task-plans/task-plan-phase-1-foundation-and-contracts.md)
-2. Phase 2: [task-plan-phase-2-core-runtime-and-dify.md](/root/code/easywork/docs/task-plans/task-plan-phase-2-core-runtime-and-dify.md)
-3. Phase 3: [task-plan-phase-3-tools-skills-plugin-runtime.md](/root/code/easywork/docs/task-plans/task-plan-phase-3-tools-skills-plugin-runtime.md)
-4. Phase 4: [task-plan-phase-4-subagent-proactive-capabilities.md](/root/code/easywork/docs/task-plans/task-plan-phase-4-subagent-proactive-capabilities.md)
-5. Phase 5: [task-plan-phase-5-webui-quality-and-release.md](/root/code/easywork/docs/task-plans/task-plan-phase-5-webui-quality-and-release.md)
+1. Phase 1: [task-plan-phase-1-foundation-and-contracts.md](/root/code/CWORK/docs/task-plans/task-plan-phase-1-foundation-and-contracts.md)
+2. Phase 2: [task-plan-phase-2-core-runtime-and-dify.md](/root/code/CWORK/docs/task-plans/task-plan-phase-2-core-runtime-and-dify.md)
+3. Phase 3: [task-plan-phase-3-tools-skills-plugin-runtime.md](/root/code/CWORK/docs/task-plans/task-plan-phase-3-tools-skills-plugin-runtime.md)
+4. Phase 4: [task-plan-phase-4-subagent-proactive-capabilities.md](/root/code/CWORK/docs/task-plans/task-plan-phase-4-subagent-proactive-capabilities.md)
+5. Phase 5: [task-plan-phase-5-webui-quality-and-release.md](/root/code/CWORK/docs/task-plans/task-plan-phase-5-webui-quality-and-release.md)
 
 ## Phase Summary Board
 | Phase | Name | Status | Completion | Implementation Health | Blocking Issues |
 |---|---|---|---|---|---|
-| 1 | Foundation and Contract Freeze | Not Started | 0% | Unknown | 0 |
+| 1 | Foundation and Contract Freeze | Completed | 100% | Healthy | 0 |
 | 2 | Core Runtime and Dify Provider | Not Started | 0% | Unknown | 0 |
 | 3 | Tools, Skills, and Plugin Runtime | Not Started | 0% | Unknown | 0 |
 | 4 | SubAgent, Proactive, Capability Adapters | Not Started | 0% | Unknown | 0 |
 | 5 | WebUI Completion, Quality, and Release | Not Started | 0% | Unknown | 0 |
 
 ## Phase 1 Checklist
-- Phase Document: [task-plan-phase-1-foundation-and-contracts.md](/root/code/easywork/docs/task-plans/task-plan-phase-1-foundation-and-contracts.md)
-- Phase Status: `Not Started`
-- Completion: `0%`
-- Implementation Health: `Unknown`
+- Phase Document: [task-plan-phase-1-foundation-and-contracts.md](/root/code/CWORK/docs/task-plans/task-plan-phase-1-foundation-and-contracts.md)
+- Phase Status: `Completed`
+- Completion: `100%`
+- Implementation Health: `Healthy`
 
 ### Completion Checklist
-- [ ] All Phase 1 tasks completed.
-- [ ] All Phase 1 verification commands passed.
-- [ ] Phase 1 exit criteria validated.
+- [x] All Phase 1 tasks completed.
+- [x] All Phase 1 verification commands passed.
+- [x] Phase 1 exit criteria validated.
 
 ### Implementation Progress Notes
-- `TBD`
+- Monorepo foundation finalized: `apps/core`, `apps/web`, `packages/shared`, root toolchain, editor and ignore baselines.
+- Contract package completed with shared TypeScript contracts, Zod validators, OpenAPI source (`openapi.yaml`), deterministic generation script, and generated artifact.
+- Core shell upgraded with health/readiness, runtime/session/config stubs, request-id propagation, bearer auth middleware, redaction utility, error mapping, and in-memory repository interfaces/adapters.
+- Web shell upgraded with typed API client (`@cwork/shared`) and runtime health status panel via React Query.
+- CI baseline added (`.github/workflows/ci.yml`) with generate/lint/typecheck/test/build gates.
 
 ### Evidence (Commands / CI / PRs)
-- `TBD`
+- `pnpm -r list --depth -1` (workspace package detection passed)
+- `pnpm --filter @cwork/shared gen:openapi` (generation passed)
+- `pnpm -r lint` (passed)
+- `pnpm -r typecheck` (passed)
+- `pnpm -r test` (passed)
+- `pnpm -r build` (passed)
+- `pnpm --filter @cwork/core dev` + `curl http://127.0.0.1:8787/api/v1/healthz` => `{\"ok\":true}`
+- `pnpm --filter @cwork/web dev --host 127.0.0.1 --port 5173` + `curl http://127.0.0.1:5173/` => HTML response
 
 ### Issues and Blockers
-- None.
+- Temporary issue: accidental `.js/.d.ts` artifacts were emitted into `apps/core/src`, causing lint parse errors.
 
 ### Resolutions and Decisions
-- None.
+- Resolved by deleting generated artifacts, keeping build output in `dist`, and retaining strict workspace verification commands.
 
 ## Phase 2 Checklist
-- Phase Document: [task-plan-phase-2-core-runtime-and-dify.md](/root/code/easywork/docs/task-plans/task-plan-phase-2-core-runtime-and-dify.md)
+- Phase Document: [task-plan-phase-2-core-runtime-and-dify.md](/root/code/CWORK/docs/task-plans/task-plan-phase-2-core-runtime-and-dify.md)
 - Phase Status: `Not Started`
 - Completion: `0%`
 - Implementation Health: `Unknown`
@@ -81,7 +92,7 @@ This document is the single checklist hub for:
 - None.
 
 ## Phase 3 Checklist
-- Phase Document: [task-plan-phase-3-tools-skills-plugin-runtime.md](/root/code/easywork/docs/task-plans/task-plan-phase-3-tools-skills-plugin-runtime.md)
+- Phase Document: [task-plan-phase-3-tools-skills-plugin-runtime.md](/root/code/CWORK/docs/task-plans/task-plan-phase-3-tools-skills-plugin-runtime.md)
 - Phase Status: `Not Started`
 - Completion: `0%`
 - Implementation Health: `Unknown`
@@ -104,7 +115,7 @@ This document is the single checklist hub for:
 - None.
 
 ## Phase 4 Checklist
-- Phase Document: [task-plan-phase-4-subagent-proactive-capabilities.md](/root/code/easywork/docs/task-plans/task-plan-phase-4-subagent-proactive-capabilities.md)
+- Phase Document: [task-plan-phase-4-subagent-proactive-capabilities.md](/root/code/CWORK/docs/task-plans/task-plan-phase-4-subagent-proactive-capabilities.md)
 - Phase Status: `Not Started`
 - Completion: `0%`
 - Implementation Health: `Unknown`
@@ -127,7 +138,7 @@ This document is the single checklist hub for:
 - None.
 
 ## Phase 5 Checklist
-- Phase Document: [task-plan-phase-5-webui-quality-and-release.md](/root/code/easywork/docs/task-plans/task-plan-phase-5-webui-quality-and-release.md)
+- Phase Document: [task-plan-phase-5-webui-quality-and-release.md](/root/code/CWORK/docs/task-plans/task-plan-phase-5-webui-quality-and-release.md)
 - Phase Status: `Not Started`
 - Completion: `0%`
 - Implementation Health: `Unknown`
