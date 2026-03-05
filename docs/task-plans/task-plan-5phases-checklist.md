@@ -14,7 +14,7 @@ This document is the single checklist hub for:
 4. Mark a phase as `Completed` only after all exit criteria are verified.
 
 ## Global Status
-- Overall Program Status: `In Progress (Phase 1-2 Completed)`
+- Overall Program Status: `In Progress (Phase 1-2 Completed, Phase 3 In Progress)`
 - Last Updated: `2026-03-05`
 - Owner: `Codex + User`
 
@@ -30,7 +30,7 @@ This document is the single checklist hub for:
 |---|---|---|---|---|---|
 | 1 | Foundation and Contract Freeze | Completed | 100% | Healthy | 0 |
 | 2 | Core Runtime and Dify Provider | Completed | 100% | Healthy | 0 |
-| 3 | Tools, Skills, and Plugin Runtime | Not Started | 0% | Unknown | 0 |
+| 3 | Tools, Skills, and Plugin Runtime | In Progress | 85% | Healthy | 0 |
 | 4 | SubAgent, Proactive, Capability Adapters | Not Started | 0% | Unknown | 0 |
 | 5 | WebUI Completion, Quality, and Release | Not Started | 0% | Unknown | 0 |
 
@@ -114,26 +114,34 @@ This document is the single checklist hub for:
 
 ## Phase 3 Checklist
 - Phase Document: [task-plan-phase-3-tools-skills-plugin-runtime.md](/root/code/CWORK/docs/task-plans/task-plan-phase-3-tools-skills-plugin-runtime.md)
-- Phase Status: `Not Started`
-- Completion: `0%`
-- Implementation Health: `Unknown`
+- Phase Status: `In Progress`
+- Completion: `85%`
+- Implementation Health: `Healthy`
 
 ### Completion Checklist
 - [ ] All Phase 3 tasks completed.
-- [ ] All Phase 3 verification commands passed.
+- [x] All Phase 3 verification commands passed.
 - [ ] Phase 3 exit criteria validated.
 
 ### Implementation Progress Notes
-- `TBD`
+- Added tool runtime foundation (`registry`, `executor`, bootstrap tools) with timeout/error wrapping and audit hooks.
+- Added MCP config/runtime support with repository shape, runtime manager, and management APIs.
+- Added skill runtime manager with inventory reload, prompt binding helper, lifecycle APIs, and ZIP import sanitization checks.
+- Added plugin runtime with manifest parser, compatibility checks, local/git import, lifecycle APIs, and load-failure isolation.
+- Wired tool trace emission (`tool_call_start`, `tool_call_end`) into runtime chat SSE pipeline.
+- Extended shared contracts + schemas for tools/MCP/skills, and expanded integration/unit test coverage.
 
 ### Evidence (Commands / CI / PRs)
-- `TBD`
+- `pnpm -r lint` (passed)
+- `pnpm -r typecheck` (passed)
+- `pnpm -r test` (passed; core: 20 files, 45 tests)
+- `pnpm -r build` (passed)
 
 ### Issues and Blockers
-- None.
+- None currently blocking.
 
 ### Resolutions and Decisions
-- None.
+- Addressed strict TS edge cases for optional fields and error-safe async wrapping in tool execution path.
 
 ## Phase 4 Checklist
 - Phase Document: [task-plan-phase-4-subagent-proactive-capabilities.md](/root/code/CWORK/docs/task-plans/task-plan-phase-4-subagent-proactive-capabilities.md)

@@ -181,9 +181,67 @@ export interface PluginImportGitRequest {
   ref?: string | undefined;
 }
 
+export interface ToolSchemaField {
+  type: 'string' | 'number' | 'boolean' | 'object' | 'array';
+  required?: boolean | undefined;
+  description?: string | undefined;
+}
+
+export interface ToolItem {
+  toolName: string;
+  description: string;
+  enabled: boolean;
+  schema: Record<string, ToolSchemaField>;
+  source: 'builtin' | 'mcp' | 'plugin';
+}
+
+export interface ToolListResponse {
+  items: ToolItem[];
+}
+
+export interface ToolExecuteRequest {
+  toolName: string;
+  arguments: Record<string, unknown>;
+  sessionId?: string | undefined;
+}
+
+export interface ToolExecuteResponse {
+  ok: boolean;
+  output?: unknown;
+  error?: {
+    code: ErrorCode;
+    message: string;
+  };
+}
+
+export type McpTransportType = 'stdio' | 'http' | 'sse';
+
+export interface McpServerConfig {
+  name: string;
+  enabled: boolean;
+  transport: McpTransportType;
+  command?: string | undefined;
+  args?: string[] | undefined;
+  url?: string | undefined;
+  timeoutSec?: number | undefined;
+}
+
+export interface McpServerRuntimeState {
+  name: string;
+  enabled: boolean;
+  healthy: boolean;
+  lastCheckAt?: string | undefined;
+  lastError?: string | undefined;
+}
+
+export interface McpServerListResponse {
+  items: Array<McpServerConfig & { runtime: McpServerRuntimeState }>;
+}
+
 export interface SkillDescriptor {
   skillId: string;
   name: string;
+  scope?: 'local_only' | 'sandbox_only' | 'both' | undefined;
   description?: string | undefined;
   enabled: boolean;
 }

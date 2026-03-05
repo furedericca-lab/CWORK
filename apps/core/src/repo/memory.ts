@@ -1,4 +1,4 @@
-import type { DifyConfig, PluginItem, SkillDescriptor, SubagentDescriptor } from '@cwork/shared';
+import type { DifyConfig, McpServerConfig, McpServerRuntimeState, PluginItem, SkillDescriptor, SubagentDescriptor, ToolItem } from '@cwork/shared';
 import type { CoreRepositories, ProactiveJobRecord, SessionRecord } from './interfaces';
 
 const defaultDifyConfig: DifyConfig = {
@@ -18,6 +18,9 @@ export const createInMemoryRepositories = (): CoreRepositories => {
   const skillStore = new Map<string, SkillDescriptor>();
   const subagentStore = new Map<string, SubagentDescriptor>();
   const proactiveStore = new Map<string, ProactiveJobRecord>();
+  const toolStore = new Map<string, ToolItem>();
+  const mcpStore = new Map<string, McpServerConfig>();
+  const mcpRuntimeStore = new Map<string, McpServerRuntimeState>();
   let difyConfig = structuredClone(defaultDifyConfig);
 
   return {
@@ -50,16 +53,28 @@ export const createInMemoryRepositories = (): CoreRepositories => {
       async list() {
         return Array.from(pluginStore.values());
       },
+      async get(pluginId) {
+        return pluginStore.get(pluginId) ?? null;
+      },
       async upsert(item) {
         pluginStore.set(item.pluginId, item);
+      },
+      async delete(pluginId) {
+        pluginStore.delete(pluginId);
       }
     },
     skills: {
       async list() {
         return Array.from(skillStore.values());
       },
+      async get(skillId) {
+        return skillStore.get(skillId) ?? null;
+      },
       async upsert(item) {
         skillStore.set(item.skillId, item);
+      },
+      async delete(skillId) {
+        skillStore.delete(skillId);
       }
     },
     subagents: {
@@ -76,6 +91,41 @@ export const createInMemoryRepositories = (): CoreRepositories => {
       },
       async upsert(item) {
         proactiveStore.set(item.jobId, item);
+      }
+    },
+    tools: {
+      async list() {
+        return Array.from(toolStore.values());
+      },
+      async get(toolName) {
+        return toolStore.get(toolName) ?? null;
+      },
+      async upsert(item) {
+        toolStore.set(item.toolName, item);
+      },
+      async delete(toolName) {
+        toolStore.delete(toolName);
+      }
+    },
+    mcp: {
+      async list() {
+        return Array.from(mcpStore.values());
+      },
+      async get(name) {
+        return mcpStore.get(name) ?? null;
+      },
+      async upsert(item) {
+        mcpStore.set(item.name, item);
+      },
+      async delete(name) {
+        mcpStore.delete(name);
+        mcpRuntimeStore.delete(name);
+      },
+      async setRuntimeState(name, state) {
+        mcpRuntimeStore.set(name, state);
+      },
+      async getRuntimeState(name) {
+        return mcpRuntimeStore.get(name) ?? null;
       }
     }
   };

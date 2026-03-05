@@ -69,17 +69,42 @@ describe('in-memory repositories', () => {
       status: 'pending',
       updatedAt: '2026-03-05T00:00:00.000Z'
     });
+    await repo.tools.upsert({
+      toolName: 'tool.echo',
+      description: 'echo',
+      enabled: true,
+      source: 'builtin',
+      schema: {}
+    });
+    await repo.mcp.upsert({
+      name: 'mcp1',
+      enabled: true,
+      transport: 'stdio',
+      command: 'node',
+      timeoutSec: 5
+    });
+    await repo.mcp.setRuntimeState('mcp1', {
+      name: 'mcp1',
+      enabled: true,
+      healthy: false
+    });
 
     const config = await repo.difyConfig.get();
     const plugins = await repo.plugins.list();
     const skills = await repo.skills.list();
     const subagents = await repo.subagents.list();
     const jobs = await repo.proactive.list();
+    const tools = await repo.tools.list();
+    const mcp = await repo.mcp.list();
+    const mcpState = await repo.mcp.getRuntimeState('mcp1');
 
     expect(config.providerId).toBe('default');
     expect(plugins).toHaveLength(1);
     expect(skills).toHaveLength(1);
     expect(subagents).toHaveLength(1);
     expect(jobs).toHaveLength(1);
+    expect(tools).toHaveLength(1);
+    expect(mcp).toHaveLength(1);
+    expect(mcpState?.name).toBe('mcp1');
   });
 });

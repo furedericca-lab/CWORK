@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { difyConfigSchema } from './dify';
 import { pluginImportGitSchema, pluginImportLocalSchema } from './plugin';
-import { skillDescriptorSchema } from './skill';
+import { mcpServerConfigSchema } from './mcp';
+import { skillDescriptorSchema, skillImportRequestSchema } from './skill';
 import { subagentDescriptorSchema, subagentHandoffSchema } from './subagent';
+import { toolExecuteRequestSchema, toolItemSchema } from './tool';
 
 describe('difyConfigSchema', () => {
   it('accepts valid config', () => {
@@ -50,6 +52,7 @@ describe('skill and subagent schemas', () => {
     const parsed = skillDescriptorSchema.safeParse({
       skillId: 'skill.search',
       name: 'Search',
+      scope: 'both',
       enabled: true
     });
 
@@ -82,5 +85,56 @@ describe('skill and subagent schemas', () => {
     });
 
     expect(parsed.success).toBe(false);
+  });
+});
+
+describe('tool and mcp schemas', () => {
+  it('accepts tool item and execute request', () => {
+    const tool = toolItemSchema.safeParse({
+      toolName: 'web.search',
+      description: 'search web',
+      enabled: true,
+      schema: {
+        query: {
+          type: 'string',
+          required: true
+        }
+      },
+      source: 'builtin'
+    });
+
+    const request = toolExecuteRequestSchema.safeParse({
+      toolName: 'web.search',
+      arguments: { query: 'cwork' },
+      sessionId: 'sess_1'
+    });
+
+    expect(tool.success).toBe(true);
+    expect(request.success).toBe(true);
+  });
+
+  it('validates mcp transport requirements', () => {
+    const invalid = mcpServerConfigSchema.safeParse({
+      name: 'mcp_stdio',
+      enabled: true,
+      transport: 'stdio',
+      timeoutSec: 10
+    });
+
+    const valid = mcpServerConfigSchema.safeParse({
+      name: 'mcp_http',
+      enabled: true,
+      transport: 'http',
+      url: 'https://example.com/mcp',
+      timeoutSec: 10
+    });
+
+    expect(invalid.success).toBe(false);
+    expect(valid.success).toBe(true);
+  });
+
+  it('accepts skill import request', () => {
+    const parsed = skillImportRequestSchema.safeParse({ zipPath: '/tmp/skill.zip' });
+    expect(parsed.success).toBe(true);
   });
 });

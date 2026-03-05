@@ -55,11 +55,11 @@ Reference implementations:
 
 ## What Still Needs Improvement
 
-- Complete Phase 2 Dify integration hardening with real-provider live tests against non-mock Dify endpoints.
+- Complete remaining Phase 3 closure work (full exit-criteria validation and production-hardening pass).
 - Add stronger runtime observability coverage (request lifecycle snapshots and latency histograms).
-- Expand SSE robustness tests for disconnect/reconnect and heartbeat timeout behavior.
+- Expand SSE robustness tests for disconnect/reconnect and heartbeat timeout behavior under long-running tool calls.
 - Add OpenAPI contract drift check in CI (generated artifact diff gate).
-- Start Phase 3 implementation (tools/skills/plugin runtime) after Phase 2 exit criteria is fully validated.
+- Start Phase 4 implementation (SubAgent orchestration and proactive capability adapters).
 
 ## Notes
 

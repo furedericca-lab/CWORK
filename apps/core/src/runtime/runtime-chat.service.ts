@@ -7,6 +7,7 @@ import { createDefaultPipelineScheduler } from '../pipeline/factory';
 import type { RuntimePipelineContext } from '../pipeline/types';
 import type { CoreRepositories, SessionRecord } from '../repo/interfaces';
 import type { SseWriter } from '../sse/writer';
+import type { ToolExecutor } from '../tools/executor';
 
 interface RunRuntimeChatInput {
   requestId: string;
@@ -23,7 +24,7 @@ export class RuntimeChatService {
     this.difyRunner = new DifyRunner(this.difyConfigService, apiClient ?? new DifyApiClient());
   }
 
-  async run(input: RunRuntimeChatInput): Promise<{ sessionId: string }> {
+  async run(input: RunRuntimeChatInput, toolExecutor?: ToolExecutor): Promise<{ sessionId: string }> {
     const receivedAt = new Date().toISOString();
     const sessionId = input.request.sessionId ?? `sess_${randomUUID()}`;
     const session = await this.ensureSession(sessionId, input.request, receivedAt);
@@ -37,7 +38,9 @@ export class RuntimeChatService {
       session,
       sseEvents: [],
       writer: input.writer,
-      state: {}
+      state: {
+        ...(toolExecutor ? { toolExecutor } : {})
+      }
     };
 
     const scheduler = createDefaultPipelineScheduler(this.difyRunner, this.repositories);

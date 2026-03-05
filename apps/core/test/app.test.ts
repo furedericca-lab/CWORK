@@ -1,3 +1,6 @@
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
 import { describe, expect, it } from 'vitest';
 import { buildApp } from '../src/app';
 import type { DifyApiClient } from '../src/dify/api-client';
@@ -169,6 +172,163 @@ describe('core api routes', () => {
     expect(res.payload.indexOf('event: final_result')).toBeLessThan(res.payload.indexOf('event: done'));
 
     await app.close();
+  });
+
+  it('emits tool_call_start and tool_call_end traces in runtime SSE', async () => {
+    const app = await buildApp({ difyApiClient: createMockDifyApiClient() });
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/v1/runtime/chat',
+      headers: authHeaders,
+      payload: {
+        sessionId: 'sess_tool',
+        message: 'hello',
+        metadata: {
+          toolCall: {
+            toolName: 'tool.echo',
+            arguments: { text: 'hello-tool' }
+          }
+        }
+      }
+    });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.payload).toContain('event: tool_call_start');
+    expect(res.payload).toContain('event: tool_call_end');
+    expect(res.payload.indexOf('event: tool_call_start')).toBeLessThan(res.payload.indexOf('event: tool_call_end'));
+
+    await app.close();
+  });
+
+  it('supports tools and mcp management endpoints', async () => {
+    const app = await buildApp({ difyApiClient: createMockDifyApiClient() });
+
+    const toolsRes = await app.inject({
+      method: 'GET',
+      url: '/api/v1/tools',
+      headers: authHeaders
+    });
+    expect(toolsRes.statusCode).toBe(200);
+    expect(toolsRes.json().items.length).toBeGreaterThanOrEqual(2);
+
+    const executeRes = await app.inject({
+      method: 'POST',
+      url: '/api/v1/tools/execute',
+      headers: authHeaders,
+      payload: {
+        toolName: 'tool.echo',
+        arguments: { text: 'hello' },
+        sessionId: 'sess_1'
+      }
+    });
+    expect(executeRes.statusCode).toBe(200);
+    expect(executeRes.json()).toMatchObject({ ok: true, output: { text: 'hello' } });
+
+    const mcpAddRes = await app.inject({
+      method: 'POST',
+      url: '/api/v1/tools/mcp/add',
+      headers: authHeaders,
+      payload: {
+        name: 'server1',
+        enabled: true,
+        transport: 'stdio',
+        command: 'node',
+        timeoutSec: 5
+      }
+    });
+    expect(mcpAddRes.statusCode).toBe(200);
+
+    const mcpListRes = await app.inject({
+      method: 'GET',
+      url: '/api/v1/tools/mcp/servers',
+      headers: authHeaders
+    });
+    expect(mcpListRes.statusCode).toBe(200);
+    expect(mcpListRes.json().items.map((item: { name: string }) => item.name)).toContain('server1');
+
+    const mcpTestRes = await app.inject({
+      method: 'POST',
+      url: '/api/v1/tools/mcp/test',
+      headers: authHeaders,
+      payload: { name: 'server1' }
+    });
+    expect(mcpTestRes.statusCode).toBe(200);
+
+    const mcpDeleteRes = await app.inject({
+      method: 'POST',
+      url: '/api/v1/tools/mcp/delete',
+      headers: authHeaders,
+      payload: { name: 'server1' }
+    });
+    expect(mcpDeleteRes.statusCode).toBe(200);
+
+    await app.close();
+  });
+
+  it('supports plugin lifecycle endpoints (local import/enable/disable/reload/delete)', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'cwork-plugin-fixture-'));
+    const pluginDir = join(root, 'demo-plugin');
+    await mkdir(pluginDir, { recursive: true });
+    await writeFile(
+      join(pluginDir, 'cwork.plugin.json'),
+      JSON.stringify({
+        pluginId: 'demo.plugin',
+        name: 'Demo Plugin',
+        version: '0.1.0',
+        compatibility: { minCoreVersion: '0.1.0' }
+      }),
+      'utf8'
+    );
+
+    const app = await buildApp({ difyApiClient: createMockDifyApiClient() });
+
+    const importRes = await app.inject({
+      method: 'POST',
+      url: '/api/v1/plugins/import/local',
+      headers: authHeaders,
+      payload: { path: pluginDir }
+    });
+    expect(importRes.statusCode).toBe(200);
+    expect(importRes.json()).toMatchObject({ pluginId: 'demo.plugin', source: 'local' });
+
+    const enableRes = await app.inject({
+      method: 'POST',
+      url: '/api/v1/plugins/demo.plugin/enable',
+      headers: authHeaders
+    });
+    expect(enableRes.statusCode).toBe(200);
+
+    const disableRes = await app.inject({
+      method: 'POST',
+      url: '/api/v1/plugins/demo.plugin/disable',
+      headers: authHeaders
+    });
+    expect(disableRes.statusCode).toBe(200);
+
+    const reloadRes = await app.inject({
+      method: 'POST',
+      url: '/api/v1/plugins/demo.plugin/reload',
+      headers: authHeaders
+    });
+    expect(reloadRes.statusCode).toBe(200);
+
+    const listRes = await app.inject({
+      method: 'GET',
+      url: '/api/v1/plugins',
+      headers: authHeaders
+    });
+    expect(listRes.statusCode).toBe(200);
+    expect(listRes.json().items.map((item: { pluginId: string }) => item.pluginId)).toContain('demo.plugin');
+
+    const deleteRes = await app.inject({
+      method: 'DELETE',
+      url: '/api/v1/plugins/demo.plugin',
+      headers: authHeaders
+    });
+    expect(deleteRes.statusCode).toBe(200);
+
+    await app.close();
+    await rm(root, { recursive: true, force: true });
   });
 
   it('supports get/put dify config with masking and validation', async () => {

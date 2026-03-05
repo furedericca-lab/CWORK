@@ -4,4 +4,6 @@ export * from './schema/dify';
 export * from './schema/plugin';
 export * from './schema/skill';
 export * from './schema/subagent';
+export * from './schema/tool';
+export * from './schema/mcp';
 export * from './generated/openapi';
