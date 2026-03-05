@@ -46,14 +46,17 @@ describe('web console e2e smoke', () => {
       return jsonResponse({}, 'req_default');
     });
     vi.stubGlobal('fetch', fetchMock);
+    vi.resetModules();
 
     await import('../main');
-    await new Promise((resolve) => setTimeout(resolve, 60));
+    for (let i = 0; i < 50 && fetchMock.mock.calls.length === 0; i += 1) {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    }
 
     const text = document.body.textContent ?? '';
     expect(text).toContain('CWORK 运维控制台');
     expect(text).toContain('服务健康');
     expect(text).toContain('能力状态');
-    expect(fetchMock).toHaveBeenCalled();
+    expect(fetchMock.mock.calls.length).toBeGreaterThan(0);
   });
 });
